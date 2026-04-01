@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-AI Query</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='8' cy='16' r='6' fill='%23cc785c'/><circle cx='24' cy='16' r='6' fill='%234285f4'/><path d='M14 16h4' stroke='%235b5fef' stroke-width='3' stroke-linecap='round'/></svg>" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Dark mode (default) ── */
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent-claude: #cc785c;
+      --accent-gemini: #4285f4;
+      --text: #e8eaf0;
+      --text-muted: #8a8fa8;
+      --text-body: #c8cad8;
+      --radius: 10px;
+      --warn-bg: #2a1a1a;
+      --warn-border: #e05252;
+      --warn-text: #f0c0c0;
+      --note-bg: #22263a;
+      --note-border: #5b5fef;
+      --note-text: #8a8fa8;
+      --strong-color: #fff;
+      --code-color: #a8b4ff;
+      --prompt-bg: var(--surface2);
+    }
+
+    /* ── Light mode ── */
+    body.light {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --surface2: #e4e6eb;
+      --border: #ccd0d5;
+      --text: #1c1e21;
+      --text-muted: #65676b;
+      --text-body: #3a3b3c;
+      --warn-bg: #fff0f0;
+      --warn-border: #cc3333;
+      --warn-text: #7a1010;
+      --note-bg: #eef2ff;
+      --note-border: #5b5fef;
+      --note-text: #444;
+      --strong-color: #000;
+      --code-color: #5b5fef;
+      --prompt-bg: #dce1e8;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; transition: background 0.2s, color 0.2s; }
+
+    /* ── Header ── */
+    header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); }
+    header h1 { font-size: 1.05rem; font-weight: 600; }
+    header .subtitle { color: var(--text-muted); font-size: 0.8rem; }
+    .header-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .settings-toggle, .theme-toggle { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+    .settings-toggle:hover, .theme-toggle:hover { color: var(--text); border-color: var(--text-muted); }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 4px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; padding: 9px 14px; cursor: pointer; transition: all 0.15s; margin-bottom: -1px; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: #5b5fef; }
+    .tab-panel { display: none; flex-direction: column; flex: 1; min-height: 0; }
+    .tab-panel.active { display: flex; }
+
+    /* ── Settings ── */
+    .settings-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; overflow: hidden; max-height: 0; transition: max-height 0.25s ease, padding 0.25s ease; }
+    .settings-panel.open { max-height: 260px; padding: 16px 20px; }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .settings-group label { display: block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; }
+    .settings-group.claude label { color: var(--accent-claude); }
+    .settings-group.gemini label { color: var(--accent-gemini); }
+    .settings-group input, .settings-group select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; color: var(--text); font-size: 0.85rem; font-family: monospace; outline: none; transition: border-color 0.15s; }
+    .settings-group input:focus, .settings-group select:focus { border-color: var(--text-muted); }
+    .settings-group select option { background: var(--surface2); }
+    .settings-hint { margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); }
+    .settings-hint a { color: var(--text-muted); }
+
+    /* ── Layout: sidebar + main ── */
+    .app-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+    /* ── Session sidebar ── */
+    .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .sidebar-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+    .new-chat-btn { background: linear-gradient(135deg, #5b5fef, #7c3aed); color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .new-chat-btn:hover { opacity: 0.85; }
+    .session-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .session-item { padding: 9px 14px; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; position: relative; }
+    .session-item:hover { background: var(--surface2); }
+    .session-item.active { background: var(--surface2); border-left-color: #5b5fef; }
+    .session-item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 44px; }
+    .session-item-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .session-empty { padding: 20px 14px; font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+    .session-item-actions { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+    .session-item:hover .session-item-actions { opacity: 1; }
+    .rename-btn, .delete-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; line-height: 1; }
+    .rename-btn:hover { color: var(--text); background: var(--border); }
+    .delete-btn:hover { color: #e05252; background: rgba(224,82,82,0.12); }
+    .rename-input { width: 100%; background: var(--bg); border: 1px solid #5b5fef; border-radius: 4px; padding: 2px 6px; color: var(--text); font-size: 0.82rem; font-family: inherit; outline: none; }
+    .sidebar-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .sidebar-search input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 0.78rem; font-family: inherit; outline: none; box-sizing: border-box; transition: border-color 0.15s; }
+    .sidebar-search input:focus { border-color: #5b5fef; }
+    .sidebar-search input::placeholder { color: var(--text-muted); }
+
+    /* ── Main content ── */
+    .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+    /* ── Conversation thread ── */
+    .conversation { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+    .conversation-empty { display: flex; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); font-size: 0.9rem; }
+
+    .turn { display: flex; flex-direction: column; gap: 12px; }
+    .turn-prompt { background: var(--prompt-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 0.9rem; line-height: 1.55; align-self: flex-end; max-width: 75%; white-space: pre-wrap; }
+    .turn-prompt img { max-width: 200px; max-height: 150px; border-radius: 6px; display: block; margin-top: 8px; }
+
+    .turn-responses { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .turn-responses.single-bot { grid-template-columns: 1fr; }
+    .turn-responses.stacked { grid-template-columns: 1fr; }
+    .turn-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .turn-card.bot-hidden { display: none; }
+    .turn-card-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .claude .card-dot { background: var(--accent-claude); }
+    .gemini .card-dot { background: var(--accent-gemini); }
+    .turn-card-name { font-size: 0.78rem; font-weight: 600; }
+    .claude .turn-card-name { color: var(--accent-claude); }
+    .gemini .turn-card-name { color: var(--accent-gemini); }
+    .turn-card-tokens { font-size: 0.7rem; color: var(--text-muted); }
+    .turn-card-body { padding: 12px; font-size: 0.88rem; line-height: 1.65; }
+    .copy-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 2px 9px; font-size: 0.72rem; cursor: pointer; transition: all 0.15s; }
+    .copy-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .copy-both-row { display: flex; justify-content: flex-end; margin-top: 6px; }
+    .copy-both-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 3px 12px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
+    .copy-both-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .turn-card-body .error-msg { color: #e05252; }
+
+    /* ── Markdown in responses ── */
+    .turn-card-body h1, .turn-card-body h2, .turn-card-body h3 { margin: 12px 0 5px; font-weight: 600; }
+    .turn-card-body h1 { font-size: 1.1rem; }
+    .turn-card-body h2 { font-size: 1rem; }
+    .turn-card-body h3 { font-size: 0.92rem; }
+    .turn-card-body p { margin-bottom: 8px; }
+    .turn-card-body p:last-child { margin-bottom: 0; }
+    .turn-card-body ul, .turn-card-body ol { padding-left: 18px; margin-bottom: 8px; }
+    .turn-card-body li { margin-bottom: 3px; }
+    .turn-card-body code { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 4px; font-family: monospace; font-size: 0.82em; color: var(--code-color); }
+    .turn-card-body pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow-x: auto; margin-bottom: 8px; }
+    .turn-card-body pre code { background: none; border: none; padding: 0; color: var(--text-body); }
+    .turn-card-body blockquote { border-left: 3px solid var(--border); padding-left: 10px; color: var(--text-muted); margin-bottom: 8px; }
+    .turn-card-body strong { font-weight: 600; color: var(--strong-color); }
+    .turn-card-body table { border-collapse: collapse; width: 100%; margin-bottom: 8px; font-size: 0.82rem; }
+    .turn-card-body th, .turn-card-body td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; }
+    .turn-card-body th { background: var(--surface2); font-weight: 600; }
+
+    /* ── Thinking indicator ── */
+    .thinking { display: flex; gap: 4px; padding: 12px; }
+    .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: bounce 1.2s ease-in-out infinite; }
+    .thinking span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* ── Image preview ── */
+    .image-preview-bar { padding: 8px 20px 0; display: none; }
+    .image-preview-bar.has-image { display: block; }
+    .image-preview-wrap { display: inline-flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+    .image-preview-wrap img { height: 48px; width: auto; border-radius: 4px; display: block; }
+    .image-preview-name { font-size: 0.78rem; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .image-clear-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 2px; line-height: 1; }
+    .image-clear-btn:hover { color: var(--text); }
+
+    /* ── Input area ── */
+    .input-area { padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 10px; align-items: flex-end; }
+    .input-wrap { flex: 1; }
+    textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-size: 0.92rem; font-family: inherit; resize: none; outline: none; transition: border-color 0.15s; line-height: 1.5; max-height: 150px; overflow-y: auto; min-height: 42px; }
+    textarea:focus { border-color: #4a4f6e; }
+    textarea::placeholder { color: var(--text-muted); }
+    .input-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+    .image-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius); padding: 0 12px; font-size: 1.1rem; cursor: pointer; transition: all 0.15s; height: 42px; white-space: nowrap; }
+    .image-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .image-btn.has-image { border-color: #5b5fef; color: #5b5fef; }
+    .send-btn { background: linear-gradient(135deg, #5b5fef, #7c3aed); color: #fff; border: none; border-radius: var(--radius); padding: 10px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.15s, transform 0.1s; height: 42px; }
+    .send-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Toggle controls strip ── */
+    .controls-row { display: flex; align-items: center; gap: 6px; padding: 6px 20px 0; }
+    .controls-strip { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; flex: 1; overflow: hidden; max-height: 40px; transition: max-height 0.2s ease, opacity 0.2s ease; opacity: 1; }
+    .controls-strip.hidden { max-height: 0; opacity: 0; pointer-events: none; }
+    .hide-controls-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; padding: 2px 7px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
+    .hide-controls-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .toggle-pill { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; color: var(--text-muted); user-select: none; }
+    .toggle-pill:hover { border-color: var(--text-muted); color: var(--text); }
+    .toggle-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); transition: background 0.15s; flex-shrink: 0; }
+    /* Claude — orange */
+    .toggle-pill.claude-pill.active { border-color: #cc785c; background: rgba(204,120,92,0.22); color: #cc785c; font-weight: 600; }
+    .toggle-pill.claude-pill.active .toggle-dot { background: #cc785c; }
+    /* Gemini — blue */
+    .toggle-pill.gemini-pill.active { border-color: #4285f4; background: rgba(66,133,244,0.22); color: #4285f4; font-weight: 600; }
+    .toggle-pill.gemini-pill.active .toggle-dot { background: #4285f4; }
+    /* Single-turn — amber */
+    .toggle-pill.active-warn { border-color: #d97706; background: rgba(217,119,6,0.20); color: #d97706; font-weight: 600; }
+    .toggle-pill.active-warn .toggle-dot { background: #d97706; }
+    /* Stacked layout — green */
+    .toggle-pill.layout-pill.active { border-color: #16a34a; background: rgba(22,163,74,0.20); color: #16a34a; font-weight: 600; }
+    .toggle-pill.layout-pill.active .toggle-dot { background: #16a34a; }
+    .controls-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+    /* ── Warnings tab ── */
+    .warnings { padding: 28px; max-width: 700px; line-height: 1.7; font-size: 0.9rem; overflow-y: auto; }
+    .warnings h2 { font-size: 1.05rem; font-weight: 700; margin: 24px 0 8px; color: var(--text); }
+    .warnings h2:first-child { margin-top: 0; }
+    .warnings p { margin-bottom: 9px; color: var(--text-body); }
+    .warnings ol, .warnings ul { padding-left: 20px; margin-bottom: 9px; color: var(--text-body); }
+    .warnings li { margin-bottom: 5px; }
+    .warnings code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-family: monospace; font-size: 0.83em; color: var(--code-color); }
+    .warnings a { color: #7c8fff; }
+    .warnings strong { color: var(--strong-color); }
+    .warnings .note { background: var(--note-bg); border-left: 3px solid var(--note-border); border-radius: 0 6px 6px 0; padding: 9px 13px; margin: 10px 0; font-size: 0.83rem; color: var(--note-text); }
+    .warnings .warn-block { background: var(--warn-bg); border-left: 3px solid var(--warn-border); border-radius: 0 6px 6px 0; padding: 9px 13px; margin: 10px 0; font-size: 0.83rem; color: var(--warn-text); }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .turn-responses { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <circle cx="5" cy="12" r="3" fill="#cc785c"/>
+    <circle cx="19" cy="12" r="3" fill="#4285f4"/>
+    <path d="M8 12h8" stroke="#5b5fef" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <div>
+    <h1>Multi-AI Query</h1>
+    <div class="subtitle">Claude &amp; Gemini side by side</div>
+  </div>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀ Light</button>
+    <button class="settings-toggle" onclick="toggleSettings()">⚙ API Keys</button>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('query', this)">Query</button>
+  <button class="tab-btn" onclick="switchTab('warnings', this)">⚠ Warnings</button>
+</div>
+
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-grid">
+    <div class="settings-group claude">
+      <label>Anthropic API Key (Claude)</label>
+      <input type="password" id="claudeKey" placeholder="sk-ant-..." oninput="saveKeys()" autocomplete="off" />
+      <div style="margin-top:7px">
+        <select id="claudeModel" onchange="saveKeys()">
+          <option value="claude-opus-4-6">Claude Opus 4.6</option>
+          <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-group gemini">
+      <label>Google API Key (Gemini)</label>
+      <input type="password" id="geminiKey" placeholder="AIza..." oninput="saveKeys()" autocomplete="off" />
+      <div style="margin-top:7px">
+        <select id="geminiModel" onchange="saveKeys()">
+          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
+          <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="settings-hint">
+    Keys saved locally — never sent anywhere except the respective APIs.<br/>
+    Get keys: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> &nbsp;|&nbsp;
+    <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>
+  </div>
+</div>
+
+<!-- Query Tab -->
+<div class="tab-panel active" id="tab-query">
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Chats</span>
+        <button class="new-chat-btn" onclick="newConversation()">+ New</button>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" id="chatSearch" placeholder="Search chats…" oninput="renderSidebar()" />
+      </div>
+      <div class="session-list" id="sessionList">
+        <div class="session-empty">No saved chats yet</div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main-content">
+      <div class="conversation" id="conversation">
+        <div class="conversation-empty" id="emptyState">Ask anything to get started</div>
+      </div>
+
+      <!-- Image preview bar -->
+      <div class="image-preview-bar" id="imagePreviewBar">
+        <div class="image-preview-wrap">
+          <img id="imagePreviewThumb" src="" alt="preview" />
+          <span class="image-preview-name" id="imagePreviewName"></span>
+          <button class="image-clear-btn" onclick="clearImage()" title="Remove image">✕</button>
+        </div>
+      </div>
+
+      <!-- Controls strip -->
+      <div class="controls-row">
+        <div class="controls-strip" id="controlsStrip">
+          <div class="toggle-pill claude-pill active" id="toggleClaude" onclick="toggleBot('claude')" title="Enable or disable Claude">
+            <div class="toggle-dot"></div> Claude
+          </div>
+          <div class="toggle-pill gemini-pill active" id="toggleGemini" onclick="toggleBot('gemini')" title="Enable or disable Gemini">
+            <div class="toggle-dot"></div> Gemini
+          </div>
+          <div class="controls-sep"></div>
+          <div class="toggle-pill" id="toggleSingleTurn" onclick="toggleSingleTurn()" title="Single-turn: each message is sent without conversation history (saves cost)">
+            <div class="toggle-dot"></div> Single-turn mode
+          </div>
+          <div class="controls-sep"></div>
+          <div class="toggle-pill layout-pill" id="toggleLayout" onclick="toggleLayout()" title="Switch between side-by-side and stacked layout">
+            <div class="toggle-dot"></div> Stacked layout
+          </div>
+        </div>
+        <button class="hide-controls-btn" id="hideControlsBtn" onclick="toggleControlsStrip()" title="Show/hide controls">▲ Hide</button>
+      </div>
+
+      <!-- Input area -->
+      <div class="input-area">
+        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageSelect(event)" />
+        <button class="image-btn" id="imageBtn" onclick="document.getElementById('imageInput').click()" title="Attach an image">🖼</button>
+        <div class="input-wrap">
+          <textarea id="promptInput" rows="1" placeholder="Ask anything… (Enter to send, Shift+Enter for new line)" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <div class="input-hint">
+            <span>Enter to send &nbsp;·&nbsp; Shift+Enter for new line &nbsp;·&nbsp; 🖼 to attach image</span>
+          </div>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendPrompt()">Send →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Warnings Tab -->
+<div class="tab-panel" id="tab-warnings">
+  <div class="warnings">
+
+    <h2>API costs vs. chat subscriptions</h2>
+    <p>This tool uses the <strong>API</strong>, which is separate from your Claude or Gemini chat subscriptions. API usage is billed per token (roughly 1 token ≈ 1 word) and requires its own billing setup.</p>
+    <div class="warn-block">Even if you pay for Claude.ai or Gemini Advanced, those subscriptions do <strong>not</strong> cover API usage. API costs are charged separately.</div>
+
+    <h2>Pricing guide</h2>
+    <p>API costs are charged per token (roughly 1 token ≈ 1 word). Images also consume tokens.</p>
+    <p><strong>Claude (Anthropic)</strong> — requires a credit card, pay as you go:</p>
+    <ul>
+      <li><strong>Haiku 4.5</strong> — cheapest (~$0.001 per 1K output tokens)</li>
+      <li><strong>Sonnet 4.6</strong> — mid-range (~$0.005 per 1K output tokens)</li>
+      <li><strong>Opus 4.6</strong> — most expensive (~$0.015 per 1K output tokens)</li>
+    </ul>
+    <p><strong>Gemini (Google)</strong>:</p>
+    <ul>
+      <li><strong>2.5 Flash</strong> — free tier available, best for everyday use</li>
+      <li><strong>2.5 Pro</strong> — free tier with lower limits</li>
+      <li><strong>3.1 Flash Lite</strong> — paid, no free tier</li>
+      <li><strong>3.1 Pro</strong> — paid, ~$0.002 per input token / $0.012 per output token</li>
+    </ul>
+    <div class="note">The token counts shown in each response (e.g. <strong>30↑ 309↓</strong>) show how many tokens were sent up (↑) and received down (↓) for that message. Multiply by the model's price per token to estimate cost.</div>
+
+    <h2>Understanding the controls &amp; their cost impact</h2>
+    <p>The toggle pills above the input box let you control which AIs respond and how.</p>
+
+    <p><strong>Claude toggle (orange dot)</strong> — enables or disables Claude. When off, Claude is skipped and its card is hidden. Only Gemini responds, taking the full width.</p>
+    <p><strong>Gemini toggle (blue dot)</strong> — enables or disables Gemini. When off, Gemini is skipped and its card is hidden. Only Claude responds, taking the full width.</p>
+    <p><strong>Single-turn mode (yellow when on)</strong> — when on, each message is sent as a standalone question with no conversation history. The AI won't remember earlier turns. When off (default), the full history is sent so the AI can follow along.</p>
+    <p><strong>Stacked layout (green when on)</strong> — when on, responses appear one above the other instead of side by side. Useful on narrower screens or when reading long responses.</p>
+
+    <h2>Mode combinations explained</h2>
+
+    <p><strong>Both AIs on · Single-turn OFF (default)</strong><br/>
+    Both Claude and Gemini respond. Each follow-up sends the full conversation history to both. Best for comparing reasoning across a real back-and-forth — but the most expensive mode since history accumulates for both.</p>
+
+    <p><strong>Both AIs on · Single-turn ON</strong><br/>
+    Both respond, but every message is fresh with no history. Good for quickly comparing isolated answers. Low cost, but the AIs won't remember what you said before.</p>
+
+    <p><strong>One AI on · Single-turn OFF</strong><br/>
+    Only the enabled AI responds and remembers the full conversation. Like using Claude.ai or Gemini directly. Roughly half the cost of running both, but history still grows.</p>
+
+    <p><strong>One AI on · Single-turn ON</strong><br/>
+    Only one AI, no history. The lowest-cost mode. Quick, independent answers from one AI with no context overhead.</p>
+
+    <div class="note">Switching Single-turn mode on or off automatically clears the current conversation history to avoid mixing context between modes.</div>
+
+    <h2>Images add cost</h2>
+    <p>When you attach an image, it is encoded and sent to the API along with your text. Images consume additional tokens — a typical photo can add hundreds to thousands of tokens per message. If you use multi-turn mode with images, those image tokens are re-sent with every follow-up in that conversation.</p>
+    <div class="warn-block">To keep image costs low, use Single-turn mode for image questions, or start a new chat after getting your answer.</div>
+
+    <h2>Multi-turn conversations cost more</h2>
+    <p>Every time you send a follow-up message (with Single-turn OFF), the <strong>entire conversation history</strong> is sent to the API again so the AI has context. A 10-message conversation costs significantly more than 10 separate single questions.</p>
+    <div class="warn-block"><strong>To keep costs low:</strong> start a <strong>+ New</strong> chat for each unrelated question, or turn on <strong>Single-turn mode</strong>. Only use multi-turn when you genuinely need the AI to remember what was said earlier.</div>
+
+    <h2>Your API keys are sensitive</h2>
+    <p>Treat your API keys like passwords. Anyone who has your key can make API calls charged to your account.</p>
+    <ul>
+      <li>Keys are saved locally in your browser — never sent anywhere except the AI APIs.</li>
+      <li>Do not share your keys or send this tool to others with your keys already entered.</li>
+      <li>Revoke and regenerate keys at any time: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> (Claude) or <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> (Gemini).</li>
+    </ul>
+
+    <h2>Troubleshooting</h2>
+    <ul>
+      <li><strong>"invalid x-api-key"</strong> — Claude key is wrong. Get a new one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.</li>
+      <li><strong>"API key not valid"</strong> — Gemini key is wrong. Get a new one at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a>.</li>
+      <li><strong>"model not found"</strong> — Change the model in the ⚙ API Keys dropdown.</li>
+      <li><strong>"Claude is disabled" / "Gemini is disabled"</strong> — Click the Claude or Gemini pill above the input to re-enable it.</li>
+      <li><strong>Page won't open</strong> — Check the taskbar for the server window. If missing, relaunch <code>Launch Multi-AI.bat</code>, then go to <code>localhost:8731/multi-ai.html</code> manually.</li>
+    </ul>
+
+  </div>
+</div>
+
+<script>
+  marked.setOptions({ breaks: true, gfm: true });
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let claudeHistory = [];
+  let geminiHistory = [];
+  let currentSession = null;
+  let savedSessions = [];
+  let activeSessionId = null;
+  let claudeEnabled = true;
+  let geminiEnabled = true;
+  let singleTurnMode = false;
+  let lightMode = false;
+  let layoutStacked = false;
+  let pendingImage = null; // { dataUrl, mimeType, base64, name }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  function toggleTheme() {
+    lightMode = !lightMode;
+    document.body.classList.toggle('light', lightMode);
+    document.getElementById('themeToggle').textContent = lightMode ? '🌙 Dark' : '☀ Light';
+    localStorage.setItem('lightMode', lightMode ? '1' : '0');
+  }
+
+  function loadTheme() {
+    lightMode = localStorage.getItem('lightMode') === '1';
+    document.body.classList.toggle('light', lightMode);
+    document.getElementById('themeToggle').textContent = lightMode ? '🌙 Dark' : '☀ Light';
+  }
+
+  // ── Layout ─────────────────────────────────────────────────────────────────
+  function toggleLayout() {
+    layoutStacked = !layoutStacked;
+    const pill = document.getElementById('toggleLayout');
+    pill.classList.toggle('active', layoutStacked);
+    document.querySelectorAll('.turn-responses').forEach(el => {
+      el.classList.toggle('stacked', layoutStacked);
+      // stacked + single-bot both handled via CSS
+    });
+    localStorage.setItem('layoutStacked', layoutStacked ? '1' : '0');
+  }
+
+  function loadLayout() {
+    layoutStacked = localStorage.getItem('layoutStacked') === '1';
+    document.getElementById('toggleLayout').classList.toggle('active', layoutStacked);
+    if (localStorage.getItem('controlsHidden') === '1') toggleControlsStrip();
+  }
+
+  // ── Controls strip visibility ──────────────────────────────────────────────
+  function toggleControlsStrip() {
+    const strip = document.getElementById('controlsStrip');
+    const btn = document.getElementById('hideControlsBtn');
+    const hidden = strip.classList.toggle('hidden');
+    btn.textContent = hidden ? '▼ Show' : '▲ Hide';
+    localStorage.setItem('controlsHidden', hidden ? '1' : '0');
+  }
+
+  // ── Bot toggles ────────────────────────────────────────────────────────────
+  function toggleBot(which) {
+    if (which === 'claude') {
+      claudeEnabled = !claudeEnabled;
+      document.getElementById('toggleClaude').classList.toggle('active', claudeEnabled);
+    } else {
+      geminiEnabled = !geminiEnabled;
+      document.getElementById('toggleGemini').classList.toggle('active', geminiEnabled);
+    }
+  }
+
+  function toggleSingleTurn() {
+    singleTurnMode = !singleTurnMode;
+    const el = document.getElementById('toggleSingleTurn');
+    el.classList.toggle('active-warn', singleTurnMode);
+    el.innerHTML = `<div class="toggle-dot" style="background:${singleTurnMode ? '#f0c070' : ''}"></div> ${singleTurnMode ? 'Single-turn ON' : 'Single-turn mode'}`;
+    claudeHistory = [];
+    geminiHistory = [];
+  }
+
+  // ── Settings ───────────────────────────────────────────────────────────────
+  function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); }
+
+  function saveKeys() {
+    localStorage.setItem('claudeKey', document.getElementById('claudeKey').value);
+    localStorage.setItem('geminiKey', document.getElementById('geminiKey').value);
+    localStorage.setItem('claudeModel', document.getElementById('claudeModel').value);
+    localStorage.setItem('geminiModel', document.getElementById('geminiModel').value);
+  }
+
+  function loadKeys() {
+    const ck = localStorage.getItem('claudeKey') || '';
+    const gk = localStorage.getItem('geminiKey') || '';
+    const cm = localStorage.getItem('claudeModel') || 'claude-sonnet-4-6';
+    const gm = localStorage.getItem('geminiModel') || 'gemini-2.5-flash';
+    document.getElementById('claudeKey').value = ck;
+    document.getElementById('geminiKey').value = gk;
+    document.getElementById('claudeModel').value = cm;
+    document.getElementById('geminiModel').value = gm;
+    if (!ck && !gk) document.getElementById('settingsPanel').classList.add('open');
+  }
+
+  // ── Image handling ─────────────────────────────────────────────────────────
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      const mimeType = file.type || 'image/jpeg';
+      const base64 = dataUrl.split(',')[1];
+      pendingImage = { dataUrl, mimeType, base64, name: file.name };
+      document.getElementById('imagePreviewThumb').src = dataUrl;
+      document.getElementById('imagePreviewName').textContent = file.name;
+      document.getElementById('imagePreviewBar').classList.add('has-image');
+      document.getElementById('imageBtn').classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // reset so same file can be re-selected
+  }
+
+  function clearImage() {
+    pendingImage = null;
+    document.getElementById('imagePreviewBar').classList.remove('has-image');
+    document.getElementById('imageBtn').classList.remove('has-image');
+    document.getElementById('imagePreviewThumb').src = '';
+    document.getElementById('imagePreviewName').textContent = '';
+  }
+
+  // ── Session storage ────────────────────────────────────────────────────────
+  function loadSessions() {
+    try { savedSessions = JSON.parse(localStorage.getItem('sessions') || '[]'); }
+    catch(e) { savedSessions = []; }
+    renderSidebar();
+  }
+
+  function saveSessions() {
+    localStorage.setItem('sessions', JSON.stringify(savedSessions.slice(-50)));
+  }
+
+  function saveCurrentSession() {
+    if (!currentSession || currentSession.turns.length === 0) return;
+    const idx = savedSessions.findIndex(s => s.id === currentSession.id);
+    if (idx >= 0) savedSessions[idx] = currentSession;
+    else savedSessions.push(currentSession);
+    saveSessions();
+    renderSidebar();
+  }
+
+  // ── Sidebar ────────────────────────────────────────────────────────────────
+  function renderSidebar() {
+    const list = document.getElementById('sessionList');
+    const query = (document.getElementById('chatSearch')?.value || '').toLowerCase().trim();
+    const filtered = [...savedSessions].reverse().filter(s =>
+      !query || s.title.toLowerCase().includes(query)
+    );
+    if (savedSessions.length === 0) {
+      list.innerHTML = '<div class="session-empty">No saved chats yet</div>';
+      return;
+    }
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="session-empty">No chats match your search</div>';
+      return;
+    }
+    list.innerHTML = '';
+    filtered.forEach(session => {
+      const el = document.createElement('div');
+      el.className = 'session-item' + (session.id === activeSessionId ? ' active' : '');
+      el.innerHTML = `
+        <div class="session-item-title" id="title-${session.id}">${escHtml(session.title)}</div>
+        <div class="session-item-meta">${session.turns.length} turn${session.turns.length !== 1 ? 's' : ''} · ${formatDate(session.id)}</div>
+        <div class="session-item-actions">
+          <button class="rename-btn" title="Rename chat" onclick="startRename(event, ${session.id})">✎</button>
+          <button class="delete-btn" title="Delete chat" onclick="deleteSession(event, ${session.id})">✕</button>
+        </div>
+      `;
+      el.onclick = () => loadSession(session.id);
+      list.appendChild(el);
+    });
+  }
+
+  function startRename(e, id) {
+    e.stopPropagation(); // don't trigger loadSession
+    const titleEl = document.getElementById('title-' + id);
+    if (!titleEl) return;
+    const session = savedSessions.find(s => s.id === id);
+    if (!session) return;
+
+    const input = document.createElement('input');
+    input.className = 'rename-input';
+    input.value = session.title;
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    function commit() {
+      const newTitle = input.value.trim() || session.title;
+      session.title = newTitle;
+      if (currentSession && currentSession.id === id) currentSession.title = newTitle;
+      saveSessions();
+      renderSidebar();
+    }
+    input.onblur = commit;
+    input.onkeydown = e => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = session.title; input.blur(); }
+    };
+  }
+
+  function formatDate(id) {
+    const d = new Date(id);
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  function loadSession(id) {
+    const session = savedSessions.find(s => s.id === id);
+    if (!session) return;
+    saveCurrentSession();
+    currentSession = JSON.parse(JSON.stringify(session));
+    activeSessionId = id;
+    claudeHistory = [];
+    geminiHistory = [];
+    session.turns.forEach(turn => {
+      const userContent = turn.imageBase64
+        ? [{ type: 'image', source: { type: 'base64', media_type: turn.imageMime || 'image/jpeg', data: turn.imageBase64 } }, { type: 'text', text: turn.prompt }]
+        : turn.prompt;
+      claudeHistory.push({ role: 'user', content: userContent });
+      if (turn.claudeText) claudeHistory.push({ role: 'assistant', content: turn.claudeText });
+      const geminiParts = turn.imageBase64
+        ? [{ inlineData: { mimeType: turn.imageMime || 'image/jpeg', data: turn.imageBase64 } }, { text: turn.prompt }]
+        : [{ text: turn.prompt }];
+      geminiHistory.push({ role: 'user', parts: geminiParts });
+      if (turn.geminiText) geminiHistory.push({ role: 'model', parts: [{ text: turn.geminiText }] });
+    });
+    renderConversation(session);
+    renderSidebar();
+  }
+
+  function renderConversation(session) {
+    const conv = document.getElementById('conversation');
+    conv.innerHTML = '';
+    if (session.turns.length === 0) {
+      conv.innerHTML = '<div class="conversation-empty" id="emptyState">Ask anything to get started</div>';
+      return;
+    }
+    session.turns.forEach(turn => appendTurn(turn));
+    conv.scrollTop = conv.scrollHeight;
+  }
+
+  // ── Conversation rendering ─────────────────────────────────────────────────
+  function appendTurn(turn) {
+    const conv = document.getElementById('conversation');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    // Determine which cards to show
+    const hideClaude = !turn.claudeText && turn.claudeError === 'Claude is disabled.';
+    const hideGemini = !turn.geminiText && turn.geminiError === 'Gemini is disabled.';
+    const singleBotMode = hideClaude || hideGemini;
+
+    const el = document.createElement('div');
+    el.className = 'turn';
+    const turnId = 'turn-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    const claudeId = turnId + '-claude';
+    const geminiId = turnId + '-gemini';
+
+    const imgHtml = turn.imageDataUrl ? `<img src="${turn.imageDataUrl}" alt="attached image" />` : '';
+    const responsesClass = ['turn-responses', singleBotMode ? 'single-bot' : '', layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
+
+    el.innerHTML = `
+      <div class="turn-prompt">${escHtml(turn.prompt)}${imgHtml}</div>
+      <div class="${responsesClass}">
+        <div class="turn-card claude${hideClaude ? ' bot-hidden' : ''}">
+          <div class="turn-card-header">
+            <div class="card-dot"></div>
+            <span class="turn-card-name">Claude</span>
+            <span class="turn-card-tokens">${turn.claudeTokens || ''}</span>
+            <button class="copy-btn" onclick="copyById('${claudeId}', this)">Copy</button>
+          </div>
+          <div class="turn-card-body" id="${claudeId}">${turn.claudeHtml || (turn.claudeText ? marked.parse(turn.claudeText) : '<span class="error-msg">' + escHtml(turn.claudeError || '') + '</span>')}</div>
+        </div>
+        <div class="turn-card gemini${hideGemini ? ' bot-hidden' : ''}">
+          <div class="turn-card-header">
+            <div class="card-dot"></div>
+            <span class="turn-card-name">Gemini</span>
+            <span class="turn-card-tokens">${turn.geminiTokens || ''}</span>
+            <button class="copy-btn" onclick="copyById('${geminiId}', this)">Copy</button>
+          </div>
+          <div class="turn-card-body" id="${geminiId}">${turn.geminiHtml || (turn.geminiText ? marked.parse(turn.geminiText) : '<span class="error-msg">' + escHtml(turn.geminiError || '') + '</span>')}</div>
+        </div>
+      </div>
+      ${!singleBotMode ? `<div class="copy-both-row"><button class="copy-both-btn" onclick="copyBoth('${claudeId}', '${geminiId}', this)">Copy both</button></div>` : ''}
+    `;
+    conv.appendChild(el);
+    conv.scrollTop = conv.scrollHeight;
+    return el;
+  }
+
+  function appendThinkingTurn(prompt, imgDataUrl) {
+    const conv = document.getElementById('conversation');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const el = document.createElement('div');
+    el.className = 'turn';
+    el.id = 'thinking-turn';
+    const imgHtml = imgDataUrl ? `<img src="${imgDataUrl}" alt="attached image" />` : '';
+    const responsesClass = ['turn-responses', (!claudeEnabled || !geminiEnabled) ? 'single-bot' : '', layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
+    el.innerHTML = `
+      <div class="turn-prompt">${escHtml(prompt)}${imgHtml}</div>
+      <div class="${responsesClass}">
+        <div class="turn-card claude${!claudeEnabled ? ' bot-hidden' : ''}">
+          <div class="turn-card-header"><div class="card-dot"></div><span class="turn-card-name">Claude</span></div>
+          <div class="turn-card-body thinking" id="claudeThinking"><span></span><span></span><span></span></div>
+        </div>
+        <div class="turn-card gemini${!geminiEnabled ? ' bot-hidden' : ''}">
+          <div class="turn-card-header"><div class="card-dot"></div><span class="turn-card-name">Gemini</span></div>
+          <div class="turn-card-body thinking" id="geminiThinking"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    `;
+    conv.appendChild(el);
+    conv.scrollTop = conv.scrollHeight;
+    return el;
+  }
+
+  // ── New conversation ───────────────────────────────────────────────────────
+  function newConversation() {
+    saveCurrentSession();
+    claudeHistory = [];
+    geminiHistory = [];
+    currentSession = { id: Date.now(), title: 'New chat', turns: [] };
+    activeSessionId = null;
+    document.getElementById('conversation').innerHTML = '<div class="conversation-empty" id="emptyState">Ask anything to get started</div>';
+    document.getElementById('promptInput').value = '';
+    document.getElementById('promptInput').style.height = '';
+    clearImage();
+    document.getElementById('promptInput').focus();
+    renderSidebar();
+  }
+
+  // ── API calls ──────────────────────────────────────────────────────────────
+  async function callClaude(prompt, apiKey, model, image) {
+    // Build user content: with or without image
+    const userContent = image
+      ? [{ type: 'image', source: { type: 'base64', media_type: image.mimeType, data: image.base64 } }, { type: 'text', text: prompt }]
+      : prompt;
+
+    const messages = singleTurnMode
+      ? [{ role: 'user', content: userContent }]
+      : [...claudeHistory, { role: 'user', content: userContent }];
+    if (!singleTurnMode) claudeHistory.push({ role: 'user', content: userContent });
+
+    const res = await fetch('/proxy/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify({ model, max_tokens: 2048, messages })
+    });
+    if (!res.ok) {
+      if (!singleTurnMode) claudeHistory.pop();
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    if (!singleTurnMode) claudeHistory.push({ role: 'assistant', content: text });
+    return { text, tokens: data.usage ? `${data.usage.input_tokens}↑ ${data.usage.output_tokens}↓` : '' };
+  }
+
+  async function callGemini(prompt, apiKey, model, image) {
+    const parts = image
+      ? [{ inlineData: { mimeType: image.mimeType, data: image.base64 } }, { text: prompt }]
+      : [{ text: prompt }];
+
+    const contents = singleTurnMode
+      ? [{ role: 'user', parts }]
+      : [...geminiHistory, { role: 'user', parts }];
+    if (!singleTurnMode) geminiHistory.push({ role: 'user', parts });
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents })
+    });
+    if (!res.ok) {
+      if (!singleTurnMode) geminiHistory.pop();
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!singleTurnMode) geminiHistory.push({ role: 'model', parts: [{ text }] });
+    const u = data.usageMetadata;
+    return { text, tokens: u ? `${u.promptTokenCount}↑ ${u.candidatesTokenCount}↓` : '' };
+  }
+
+  // ── Send ───────────────────────────────────────────────────────────────────
+  async function sendPrompt() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    if (!prompt && !pendingImage) return;
+    const claudeKey = document.getElementById('claudeKey').value.trim();
+    const geminiKey = document.getElementById('geminiKey').value.trim();
+    const claudeModel = document.getElementById('claudeModel').value;
+    const geminiModel = document.getElementById('geminiModel').value;
+
+    if (!claudeEnabled && !geminiEnabled) {
+      alert('Both Claude and Gemini are disabled. Enable at least one using the toggles above the input.');
+      return;
+    }
+    if ((!claudeKey && claudeEnabled) && (!geminiKey && geminiEnabled)) {
+      document.getElementById('settingsPanel').classList.add('open');
+      alert('Please enter at least one API key.');
+      return;
+    }
+
+    const image = pendingImage;
+    const displayPrompt = prompt || '(image only)';
+
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('promptInput').value = '';
+    document.getElementById('promptInput').style.height = '';
+    clearImage();
+
+    if (!currentSession) {
+      currentSession = { id: Date.now(), title: displayPrompt.slice(0, 50), turns: [] };
+      activeSessionId = currentSession.id;
+    } else if (currentSession.turns.length === 0) {
+      currentSession.title = displayPrompt.slice(0, 50);
+    }
+
+    const thinkingEl = appendThinkingTurn(displayPrompt, image?.dataUrl);
+    const turn = {
+      prompt: displayPrompt,
+      imageDataUrl: image?.dataUrl || '',
+      imageBase64: image?.base64 || '',
+      imageMime: image?.mimeType || '',
+      claudeText: '', geminiText: '', claudeHtml: '', geminiHtml: '',
+      claudeTokens: '', geminiTokens: '', claudeError: '', geminiError: ''
+    };
+
+    const tasks = [];
+
+    if (claudeEnabled && claudeKey) {
+      tasks.push(callClaude(displayPrompt, claudeKey, claudeModel, image)
+        .then(({ text, tokens }) => {
+          turn.claudeText = text; turn.claudeHtml = marked.parse(text); turn.claudeTokens = tokens;
+          const el = document.getElementById('claudeThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = marked.parse(text); }
+        })
+        .catch(err => {
+          turn.claudeError = err.message;
+          const el = document.getElementById('claudeThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`; }
+        }));
+    } else {
+      const reason = !claudeEnabled ? 'Claude is disabled.' : 'No Claude API key entered.';
+      turn.claudeError = reason;
+      const el = document.getElementById('claudeThinking');
+      if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">${escHtml(reason)}</span>`; }
+    }
+
+    if (geminiEnabled && geminiKey) {
+      tasks.push(callGemini(displayPrompt, geminiKey, geminiModel, image)
+        .then(({ text, tokens }) => {
+          turn.geminiText = text; turn.geminiHtml = marked.parse(text); turn.geminiTokens = tokens;
+          const el = document.getElementById('geminiThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = marked.parse(text); }
+        })
+        .catch(err => {
+          turn.geminiError = err.message;
+          const el = document.getElementById('geminiThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`; }
+        }));
+    } else {
+      const reason = !geminiEnabled ? 'Gemini is disabled.' : 'No Gemini API key entered.';
+      turn.geminiError = reason;
+      const el = document.getElementById('geminiThinking');
+      if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">${escHtml(reason)}</span>`; }
+    }
+
+    await Promise.allSettled(tasks);
+
+    thinkingEl.remove();
+    appendTurn(turn);
+
+    currentSession.turns.push(turn);
+    saveCurrentSession();
+    renderSidebar();
+
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('promptInput').focus();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  async function copyById(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([el.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([el.innerText], { type: 'text/plain' })
+      })]);
+    } catch(e) { await navigator.clipboard.writeText(el.innerText); }
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  }
+
+  async function copyBoth(claudeId, geminiId, btn) {
+    const cEl = document.getElementById(claudeId);
+    const gEl = document.getElementById(geminiId);
+    const html = `<h2>Claude</h2>${cEl.innerHTML}<hr><h2>Gemini</h2>${gEl.innerHTML}`;
+    const text = `## Claude\n\n${cEl.innerText}\n\n---\n\n## Gemini\n\n${gEl.innerText}`;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      })]);
+    } catch(e) { await navigator.clipboard.writeText(text); }
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy both'; }, 1800);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+  }
+
+  function deleteSession(e, id) {
+    e.stopPropagation();
+    const session = savedSessions.find(s => s.id === id);
+    if (!session) return;
+    if (!confirm(`Delete "${session.title}"? This cannot be undone.`)) return;
+    savedSessions = savedSessions.filter(s => s.id !== id);
+    saveSessions();
+    if (activeSessionId === id) {
+      claudeHistory = [];
+      geminiHistory = [];
+      currentSession = { id: Date.now(), title: 'New chat', turns: [] };
+      activeSessionId = null;
+      document.getElementById('conversation').innerHTML = '<div class="conversation-empty" id="emptyState">Ask anything to get started</div>';
+    }
+    renderSidebar();
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadTheme();
+  loadLayout();
+  loadKeys();
+  loadSessions();
+  currentSession = { id: Date.now(), title: 'New chat', turns: [] };
+</script>
+</body>
+</html>
