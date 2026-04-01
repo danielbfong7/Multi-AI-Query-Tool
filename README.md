@@ -11,9 +11,13 @@ Send one prompt to **Claude** (Anthropic) and **Gemini** (Google) simultaneously
 - Multi-turn conversation — follow-up questions maintain context
 - **Single-turn mode** — send each message fresh with no history (saves API cost)
 - **Disable individual AIs** — run only Claude or only Gemini to cut costs
+- **Image input** — attach an image and both AIs will analyze it
+- **Light / dark mode** toggle
+- Side-by-side or **stacked layout** for responses
 - Enter to send, Shift+Enter for new line
 - Copy individual or both responses (with formatting preserved)
-- Chat history saved automatically in the sidebar
+- Chat history saved automatically in the sidebar, with **rename** and **delete** per chat
+- **Search chats** — filter your saved chats by name instantly
 - API keys saved locally in your browser — never sent anywhere except the AI APIs
 
 ---
@@ -57,16 +61,20 @@ Send one prompt to **Claude** (Anthropic) and **Gemini** (Google) simultaneously
 - Use the **Copy** button on each response, or **Copy both** to grab both at once
 - Click **+ New** in the sidebar to start a fresh conversation
 - Click any past chat in the sidebar to reload it
+- **Rename** a chat by hovering over it in the sidebar and clicking ✎, then press Enter to save
+- **Delete** a chat by hovering over it and clicking ✕ — you'll be asked to confirm first
+- **Search chats** by typing in the search box at the top of the sidebar — results filter instantly
 
 ### Controls above the input box
 
-Three toggle pills sit just above the input box.
+The toggle pills just above the input box control how the tool behaves. Use **▲ Hide / ▼ Show** on the right to collapse them when not needed.
 
 | Toggle | What it does |
 |--------|-------------|
-| **Claude** (orange dot) | Click to disable/enable Claude. When off, only Gemini runs. |
-| **Gemini** (blue dot) | Click to disable/enable Gemini. When off, only Claude runs. |
-| **Single-turn mode** (yellow when on) | Each message is sent without conversation history. The AI won't remember earlier turns, but every message costs the minimum — no accumulated context fees. |
+| **Claude** (orange) | Click to disable/enable Claude. When off, only Gemini runs and its card takes the full width. |
+| **Gemini** (blue) | Click to disable/enable Gemini. When off, only Claude runs. |
+| **Single-turn mode** (amber when on) | Each message is sent without conversation history — lowest cost option. |
+| **Stacked layout** (green when on) | Responses appear one above the other instead of side by side. |
 
 ---
 
@@ -144,15 +152,4 @@ Every time you send a follow-up in the same conversation, **the entire conversat
 - Your keys are stored only in your browser's local storage on your own computer.
 - They are never sent anywhere except directly to Anthropic (for Claude) and Google (for Gemini).
 - **Do not share your keys.** Anyone with your key can make API calls charged to your account.
-- If you share this tool with others, make sure your keys are not pre-filled before you send it.
-- You can revoke and regenerate keys at any time at [console.anthropic.com](https://console.anthropic.com) (Claude) or [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) (Gemini).
-
-### Setting a spending limit (recommended)
-
-To avoid unexpected charges, set a monthly spending limit on your Claude account:
-
-1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Navigate to **Billing → Usage limits**
-3. Set a monthly cap (e.g. $5) — Anthropic will stop API access once the limit is reached
-
-Google's free-tier limits for Gemini naturally cap usage without a credit card.
+- If you share this tool wit
