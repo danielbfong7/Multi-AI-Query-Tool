@@ -90,10 +90,9 @@ Right-click the minimized taskbar window and close it, or find `python.exe` in T
 |-------|-----|
 | `invalid x-api-key` | Claude key is wrong. Generate a new one at console.anthropic.com |
 | `API key not valid` | Gemini key is wrong. Generate a new one at aistudio.google.com/app/apikey |
-| `model not found` | Change the model in the ⚙ dropdown |
+| `model not found` | Change the model in the model dropdown |
 | Page won't load | Check taskbar for server window. If missing, relaunch the .bat. Then go to `localhost:8731/multi-ai.html` manually |
-| Claude disabled message | Claude toggle is off — click the Claude pill above the input to re-enable |
-| Gemini disabled message | Gemini toggle is off — click the Gemini pill above the input to re-enable |
+| Only one response showing | One AI is toggled off — click its pill above the input to re-enable it |
 
 ---
 
@@ -152,4 +151,15 @@ Every time you send a follow-up in the same conversation, **the entire conversat
 - Your keys are stored only in your browser's local storage on your own computer.
 - They are never sent anywhere except directly to Anthropic (for Claude) and Google (for Gemini).
 - **Do not share your keys.** Anyone with your key can make API calls charged to your account.
-- If you share this tool wit
+- If you share this tool with others, make sure your keys are not pre-filled before you send it.
+- You can revoke and regenerate keys at any time at [console.anthropic.com](https://console.anthropic.com) (Claude) or [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) (Gemini).
+
+### Setting a spending limit (recommended)
+
+To avoid unexpected charges, set a monthly spending limit on your Claude account:
+
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. Navigate to **Billing → Usage limits**
+3. Set a monthly cap (e.g. $5) — Anthropic will stop API access once the limit is reached
+
+Google's free-tier limits for Gemini naturally cap usage without a credit card.
