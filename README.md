@@ -48,9 +48,9 @@ Send one prompt to **Claude** (Anthropic) and **Gemini** (Google) simultaneously
 2. Double-click **`Launch Multi-AI.bat`**
 3. A minimized window appears in your taskbar (the local server). Leave it running.
 4. Your browser opens automatically to `localhost:8731/multi-ai.html`
-5. Click **⚙ API Keys** and enter your Claude and/or Gemini API keys. Saved automatically — you only need to do this once per computer.
+5. Click **API Keys** and enter your Claude and/or Gemini API keys. Saved automatically — you only need to do this once per computer.
 
-> ⚠️ Never open `multi-ai.html` by double-clicking it directly. Claude won't work that way. Always use the .bat launcher.
+> Never open `multi-ai.html` by double-clicking it directly. Claude won't work that way. Always use the .bat launcher.
 
 ---
 
@@ -107,7 +107,7 @@ Recipients will need Python installed and their own API keys.
 
 ---
 
-## ⚠ Disclaimer
+## Disclaimer
 
 ### API keys are not the same as a subscription
 
