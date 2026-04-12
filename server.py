@@ -14,7 +14,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path in ('/proxy/claude', '/proxy/chatgpt', '/proxy/dalle'):
+        if self.path in ('/proxy/claude', '/proxy/chatgpt', '/proxy/dalle', '/proxy/gemini'):
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
             api_key = self.headers.get('x-api-key', '')
@@ -30,6 +30,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 headers = {
                     'Content-Type': 'application/json',
                     'Authorization': f'Bearer {api_key}',
+                }
+            elif self.path == '/proxy/gemini':
+                model = self.headers.get('x-model', '')
+                url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}'
+                headers = {
+                    'Content-Type': 'application/json',
                 }
             else:
                 url = 'https://api.openai.com/v1/chat/completions'
