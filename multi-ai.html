@@ -17,6 +17,7 @@
       --border: #2e3250;
       --accent-claude: #cc785c;
       --accent-gemini: #4285f4;
+      --accent-chatgpt: #10a37f;
       --text: #e8eaf0;
       --text-muted: #8a8fa8;
       --text-body: #c8cad8;
@@ -77,6 +78,7 @@
     .settings-group label { display: block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; }
     .settings-group.claude label { color: var(--accent-claude); }
     .settings-group.gemini label { color: var(--accent-gemini); }
+    .settings-group.chatgpt label { color: var(--accent-chatgpt); }
     .settings-group input, .settings-group select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; color: var(--text); font-size: 0.85rem; font-family: monospace; outline: none; transition: border-color 0.15s; }
     .settings-group input:focus, .settings-group select:focus { border-color: var(--text-muted); }
     .settings-group select option { background: var(--surface2); }
@@ -121,7 +123,8 @@
     .turn-prompt { background: var(--prompt-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 0.9rem; line-height: 1.55; align-self: flex-end; max-width: 75%; white-space: pre-wrap; }
     .turn-prompt img { max-width: 200px; max-height: 150px; border-radius: 6px; display: block; margin-top: 8px; }
 
-    .turn-responses { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .turn-responses { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .turn-responses.two-bots { grid-template-columns: 1fr 1fr; }
     .turn-responses.single-bot { grid-template-columns: 1fr; }
     .turn-responses.stacked { grid-template-columns: 1fr; }
     .turn-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -130,9 +133,11 @@
     .card-dot { width: 8px; height: 8px; border-radius: 50%; }
     .claude .card-dot { background: var(--accent-claude); }
     .gemini .card-dot { background: var(--accent-gemini); }
+    .chatgpt .card-dot { background: var(--accent-chatgpt); }
     .turn-card-name { font-size: 0.78rem; font-weight: 600; }
     .claude .turn-card-name { color: var(--accent-claude); }
     .gemini .turn-card-name { color: var(--accent-gemini); }
+    .chatgpt .turn-card-name { color: var(--accent-chatgpt); }
     .turn-card-tokens { font-size: 0.7rem; color: var(--text-muted); }
     .turn-card-body { padding: 12px; font-size: 0.88rem; line-height: 1.65; }
     .copy-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 5px; padding: 2px 9px; font-size: 0.72rem; cursor: pointer; transition: all 0.15s; }
@@ -205,6 +210,8 @@
     /* Gemini — blue */
     .toggle-pill.gemini-pill.active { border-color: #4285f4; background: rgba(66,133,244,0.22); color: #4285f4; font-weight: 600; }
     .toggle-pill.gemini-pill.active .toggle-dot { background: #4285f4; }
+    .toggle-pill.chatgpt-pill.active { border-color: #10a37f; background: rgba(16,163,127,0.22); color: #10a37f; font-weight: 600; }
+    .toggle-pill.chatgpt-pill.active .toggle-dot { background: #10a37f; }
     /* Single-turn — amber */
     .toggle-pill.active-warn { border-color: #d97706; background: rgba(217,119,6,0.20); color: #d97706; font-weight: 600; }
     .toggle-pill.active-warn .toggle-dot { background: #d97706; }
@@ -212,6 +219,38 @@
     .toggle-pill.layout-pill.active { border-color: #16a34a; background: rgba(22,163,74,0.20); color: #16a34a; font-weight: 600; }
     .toggle-pill.layout-pill.active .toggle-dot { background: #16a34a; }
     .controls-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+    /* ── Image Gen tab ── */
+    .imagegen-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .imagegen-controls { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .imagegen-controls label { font-size: 0.75rem; color: var(--text-muted); margin-right: 2px; }
+    .imagegen-controls select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.78rem; padding: 4px 8px; cursor: pointer; }
+    .imagegen-size-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+    .imagegen-results { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+    .imagegen-empty { color: var(--text-muted); font-size: 0.9rem; text-align: center; margin: auto; }
+    .imagegen-item { display: flex; flex-direction: column; gap: 12px; }
+    .imagegen-prompt-label { font-size: 0.82rem; color: var(--text-muted); background: var(--surface); border-radius: 8px; padding: 8px 12px; align-self: flex-start; max-width: 100%; word-break: break-word; }
+    .imagegen-images { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .imagegen-images.single-img { grid-template-columns: 1fr; max-width: 520px; }
+    .imagegen-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .imagegen-card-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .imagegen-card-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .imagegen-card-body img { width: 100%; border-radius: 6px; display: block; }
+    .imagegen-card-body .error-msg { font-size: 0.82rem; }
+    .imagegen-card-body .img-thinking { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.82rem; padding: 20px 0; justify-content: center; }
+    .download-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: 0.75rem; padding: 4px 10px; cursor: pointer; transition: all 0.15s; align-self: flex-start; }
+    .download-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .imagegen-input-area { padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; }
+    .imagegen-input-area textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; font-family: inherit; padding: 10px 12px; resize: none; outline: none; min-height: 44px; max-height: 120px; transition: border-color 0.15s; }
+    .imagegen-input-area textarea:focus { border-color: #5b5fef; }
+    .imagegen-input-area textarea::placeholder { color: var(--text-muted); }
+    .gen-btn { background: linear-gradient(135deg, #5b5fef, #7c3aed); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .gen-btn:hover { opacity: 0.88; }
+    .gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .toggle-pill.dalle-pill.active { border-color: #10a37f; background: rgba(16,163,127,0.22); color: #10a37f; font-weight: 600; }
+    .toggle-pill.dalle-pill.active .toggle-dot { background: #10a37f; }
+    .toggle-pill.nb-pill.active { border-color: #4285f4; background: rgba(66,133,244,0.22); color: #4285f4; font-weight: 600; }
+    .toggle-pill.nb-pill.active .toggle-dot { background: #4285f4; }
 
     /* ── Warnings tab ── */
     .warnings { padding: 28px; max-width: 700px; line-height: 1.7; font-size: 0.9rem; overflow-y: auto; }
@@ -252,6 +291,7 @@
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('query', this)">Query</button>
+  <button class="tab-btn" onclick="switchTab('imagegen', this)">Image Gen</button>
   <button class="tab-btn" onclick="switchTab('warnings', this)">⚠ Warnings</button>
 </div>
 
@@ -262,9 +302,9 @@
       <input type="password" id="claudeKey" placeholder="sk-ant-..." oninput="saveKeys()" autocomplete="off" />
       <div style="margin-top:7px">
         <select id="claudeModel" onchange="saveKeys()">
-          <option value="claude-opus-4-6">Claude Opus 4.6</option>
-          <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
-          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+          <option value="claude-opus-4-6">Claude Opus 4.6 (most capable)</option>
+          <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 (recommended)</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fastest, cheapest)</option>
         </select>
       </div>
     </div>
@@ -273,11 +313,38 @@
       <input type="password" id="geminiKey" placeholder="AIza..." oninput="saveKeys()" autocomplete="off" />
       <div style="margin-top:7px">
         <select id="geminiModel" onchange="saveKeys()">
-          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
-          <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
-          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-          <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
-          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+          <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro (most capable)</option>
+          <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (recommended)</option>
+          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (fastest, cheapest)</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-group chatgpt">
+      <label>OpenAI API Key (ChatGPT)</label>
+      <input type="password" id="chatgptKey" placeholder="sk-..." oninput="saveKeys()" autocomplete="off" />
+      <div style="margin-top:7px">
+        <select id="chatgptModel" onchange="saveKeys()">
+          <optgroup label="GPT-5 series">
+            <option value="gpt-5.4">GPT-5.4 (flagship)</option>
+            <option value="gpt-5.4-mini">GPT-5.4 mini (fast, cheap)</option>
+            <option value="gpt-5.2">GPT-5.2</option>
+            <option value="gpt-5">GPT-5</option>
+            <option value="gpt-5-mini">GPT-5 mini</option>
+          </optgroup>
+          <optgroup label="GPT-4 series">
+            <option value="gpt-4o" selected>GPT-4o (recommended)</option>
+            <option value="gpt-4o-mini">GPT-4o mini (fastest, cheapest)</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          </optgroup>
+          <optgroup label="Reasoning (o-series)">
+            <option value="o3-mini">o3 mini</option>
+            <option value="o1">o1</option>
+            <option value="o1-mini">o1 mini</option>
+          </optgroup>
         </select>
       </div>
     </div>
@@ -285,7 +352,8 @@
   <div class="settings-hint">
     Keys saved locally — never sent anywhere except the respective APIs.<br/>
     Get keys: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> &nbsp;|&nbsp;
-    <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>
+    <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> &nbsp;|&nbsp;
+    <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
   </div>
 </div>
 
@@ -331,6 +399,9 @@
           <div class="toggle-pill gemini-pill active" id="toggleGemini" onclick="toggleBot('gemini')" title="Enable or disable Gemini">
             <div class="toggle-dot"></div> Gemini
           </div>
+          <div class="toggle-pill chatgpt-pill active" id="toggleChatgpt" onclick="toggleBot('chatgpt')" title="Enable or disable ChatGPT">
+            <div class="toggle-dot"></div> ChatGPT
+          </div>
           <div class="controls-sep"></div>
           <div class="toggle-pill" id="toggleSingleTurn" onclick="toggleSingleTurn()" title="Single-turn: each message is sent without conversation history (saves cost)">
             <div class="toggle-dot"></div> Single-turn mode
@@ -360,13 +431,61 @@
   </div>
 </div>
 
+<!-- Image Gen Tab -->
+<div class="tab-panel" id="tab-imagegen">
+  <div class="imagegen-body">
+
+    <!-- Controls -->
+    <div class="imagegen-controls">
+      <div class="toggle-pill dalle-pill active" id="toggleDalle" onclick="toggleImageBot('dalle')" title="Enable/disable GPT Image">
+        <div class="toggle-dot"></div> GPT Image
+      </div>
+      <div class="toggle-pill nb-pill active" id="toggleNB" onclick="toggleImageBot('nb')" title="Enable/disable Nano Banana">
+        <div class="toggle-dot"></div> Nano Banana
+      </div>
+      <div class="imagegen-size-sep"></div>
+      <label>OpenAI model:</label>
+      <select id="dalleImgModel" onchange="saveImageGenSettings()">
+        <option value="gpt-image-1.5" selected>GPT Image 1.5 (best)</option>
+        <option value="gpt-image-1">GPT Image 1</option>
+        <option value="gpt-image-1-mini">GPT Image 1 mini (cheapest)</option>
+      </select>
+      <label>Nano Banana model:</label>
+      <select id="nbImgModel" onchange="saveImageGenSettings()">
+        <option value="gemini-3.1-flash-image-preview" selected>Nano Banana 2 (3.1 Flash)</option>
+        <option value="gemini-2.5-flash-image-preview">Nano Banana (2.5 Flash)</option>
+        <option value="gemini-3-pro-image-preview">Nano Banana Pro (3 Pro)</option>
+      </select>
+      <div class="imagegen-size-sep"></div>
+      <label>Size:</label>
+      <select id="imgSize" onchange="saveImageGenSettings()">
+        <option value="1024x1024" selected>1024×1024 (square)</option>
+        <option value="1536x1024">1536×1024 (landscape)</option>
+        <option value="1024x1536">1024×1536 (portrait)</option>
+      </select>
+    </div>
+
+    <!-- Results -->
+    <div class="imagegen-results" id="imagegenResults">
+      <div class="imagegen-empty" id="imagegenEmpty">Enter a prompt below to generate images</div>
+    </div>
+
+    <!-- Input -->
+    <div class="imagegen-input-area">
+      <textarea id="imagegenPrompt" rows="1" placeholder="Describe the image you want to generate… (Enter to send)" onkeydown="handleImageGenKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="gen-btn" id="genBtn" onclick="generateImages()">Generate</button>
+    </div>
+
+  </div>
+</div>
+
 <!-- Warnings Tab -->
 <div class="tab-panel" id="tab-warnings">
   <div class="warnings">
 
     <h2>API costs vs. chat subscriptions</h2>
-    <p>This tool uses the <strong>API</strong>, which is separate from your Claude or Gemini chat subscriptions. API usage is billed per token (roughly 1 token ≈ 1 word) and requires its own billing setup.</p>
-    <div class="warn-block">Even if you pay for Claude.ai or Gemini Advanced, those subscriptions do <strong>not</strong> cover API usage. API costs are charged separately.</div>
+    <p>This tool uses the <strong>API</strong>, which is separate from your Claude, Gemini, or ChatGPT chat subscriptions. API usage is billed per token (roughly 1 token ≈ 1 word) and requires its own billing setup.</p>
+    <div class="warn-block">Even if you pay for Claude.ai Pro, Gemini Advanced, or ChatGPT Plus, those subscriptions do <strong>not</strong> cover API usage. API costs are charged separately.</div>
 
     <h2>Pricing guide</h2>
     <p>API costs are charged per token (roughly 1 token ≈ 1 word). Images also consume tokens.</p>
@@ -380,37 +499,52 @@
     <ul>
       <li><strong>2.5 Flash</strong> — free tier available, best for everyday use</li>
       <li><strong>2.5 Pro</strong> — free tier with lower limits</li>
-      <li><strong>3.1 Flash Lite</strong> — paid, no free tier</li>
-      <li><strong>3.1 Pro</strong> — paid, ~$0.002 per input token / $0.012 per output token</li>
+      <li><strong>2.0 Flash / 1.5 series</strong> — older models, free tier available</li>
+    </ul>
+    <p><strong>ChatGPT (OpenAI)</strong> — requires a credit card, pay as you go:</p>
+    <ul>
+      <li><strong>GPT-4o mini</strong> — cheapest (~$0.0006 per 1K output tokens)</li>
+      <li><strong>GPT-4o</strong> — mid-range (~$0.01 per 1K output tokens)</li>
+      <li><strong>GPT-5.4 / GPT-5 series</strong> — most capable and most expensive</li>
+      <li><strong>o-series (o1, o3)</strong> — reasoning models, significantly more expensive</li>
+    </ul>
+    <p><strong>Image generation (Image Gen tab)</strong>:</p>
+    <ul>
+      <li><strong>GPT Image 1 mini</strong> — ~$0.005 per image (cheapest)</li>
+      <li><strong>GPT Image 1</strong> — ~$0.04 per image</li>
+      <li><strong>GPT Image 1.5</strong> — ~$0.04+ per image (best quality)</li>
+      <li><strong>Nano Banana (Google)</strong> — varies by model; free tier may apply</li>
     </ul>
     <div class="note">The token counts shown in each response (e.g. <strong>30↑ 309↓</strong>) show how many tokens were sent up (↑) and received down (↓) for that message. Multiply by the model's price per token to estimate cost.</div>
 
     <h2>Understanding the controls &amp; their cost impact</h2>
     <p>The toggle pills above the input box let you control which AIs respond and how.</p>
 
-    <p><strong>Claude toggle (orange dot)</strong> — enables or disables Claude. When off, Claude is skipped and its card is hidden. Only Gemini responds, taking the full width.</p>
-    <p><strong>Gemini toggle (blue dot)</strong> — enables or disables Gemini. When off, Gemini is skipped and its card is hidden. Only Claude responds, taking the full width.</p>
+    <p><strong>Claude toggle (orange)</strong> — enables or disables Claude. When off, Claude's card is hidden.</p>
+    <p><strong>Gemini toggle (blue)</strong> — enables or disables Gemini. When off, Gemini's card is hidden.</p>
+    <p><strong>ChatGPT toggle (green)</strong> — enables or disables ChatGPT. When off, ChatGPT's card is hidden.</p>
+    <p>When only one AI is enabled, its response takes the full width. When two are enabled, they split the screen. All three enabled shows three columns.</p>
     <p><strong>Single-turn mode (yellow when on)</strong> — when on, each message is sent as a standalone question with no conversation history. The AI won't remember earlier turns. When off (default), the full history is sent so the AI can follow along.</p>
-    <p><strong>Stacked layout (green when on)</strong> — when on, responses appear one above the other instead of side by side. Useful on narrower screens or when reading long responses.</p>
+    <p><strong>Stacked layout (green when on)</strong> — when on, responses appear one above the other instead of side by side.</p>
 
     <h2>Mode combinations explained</h2>
 
-    <p><strong>Both AIs on · Single-turn OFF (default)</strong><br/>
-    Both Claude and Gemini respond. Each follow-up sends the full conversation history to both. Best for comparing reasoning across a real back-and-forth — but the most expensive mode since history accumulates for both.</p>
+    <p><strong>All AIs on · Single-turn OFF (default)</strong><br/>
+    Claude, Gemini, and ChatGPT all respond. Each follow-up sends the full conversation history to all three. Best for comparing reasoning across a real back-and-forth — but the most expensive mode.</p>
 
-    <p><strong>Both AIs on · Single-turn ON</strong><br/>
-    Both respond, but every message is fresh with no history. Good for quickly comparing isolated answers. Low cost, but the AIs won't remember what you said before.</p>
+    <p><strong>All AIs on · Single-turn ON</strong><br/>
+    All three respond, but every message is fresh with no history. Good for quickly comparing isolated answers at lower cost.</p>
 
     <p><strong>One AI on · Single-turn OFF</strong><br/>
-    Only the enabled AI responds and remembers the full conversation. Like using Claude.ai or Gemini directly. Roughly half the cost of running both, but history still grows.</p>
+    Only the enabled AI responds and remembers the full conversation. Like using Claude.ai, Gemini, or ChatGPT directly.</p>
 
     <p><strong>One AI on · Single-turn ON</strong><br/>
-    Only one AI, no history. The lowest-cost mode. Quick, independent answers from one AI with no context overhead.</p>
+    Only one AI, no history. The lowest-cost mode for quick independent answers.</p>
 
     <div class="note">Switching Single-turn mode on or off automatically clears the current conversation history to avoid mixing context between modes.</div>
 
     <h2>Images add cost</h2>
-    <p>When you attach an image, it is encoded and sent to the API along with your text. Images consume additional tokens — a typical photo can add hundreds to thousands of tokens per message. If you use multi-turn mode with images, those image tokens are re-sent with every follow-up in that conversation.</p>
+    <p>When you attach an image in the Query tab, it is encoded and sent to the API along with your text. Images consume additional tokens — a typical photo can add hundreds to thousands of tokens per message. If you use multi-turn mode with images, those image tokens are re-sent with every follow-up in that conversation.</p>
     <div class="warn-block">To keep image costs low, use Single-turn mode for image questions, or start a new chat after getting your answer.</div>
 
     <h2>Multi-turn conversations cost more</h2>
@@ -420,17 +554,18 @@
     <h2>Your API keys are sensitive</h2>
     <p>Treat your API keys like passwords. Anyone who has your key can make API calls charged to your account.</p>
     <ul>
-      <li>Keys are saved locally in your browser — never sent anywhere except the AI APIs.</li>
+      <li>Keys are saved locally in your browser — never sent anywhere except the respective AI APIs.</li>
       <li>Do not share your keys or send this tool to others with your keys already entered.</li>
-      <li>Revoke and regenerate keys at any time: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> (Claude) or <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> (Gemini).</li>
+      <li>Revoke and regenerate keys at any time: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> (Claude), <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> (Gemini), or <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> (ChatGPT).</li>
     </ul>
 
     <h2>Troubleshooting</h2>
     <ul>
       <li><strong>"invalid x-api-key"</strong> — Claude key is wrong. Get a new one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.</li>
       <li><strong>"API key not valid"</strong> — Gemini key is wrong. Get a new one at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a>.</li>
-      <li><strong>"model not found"</strong> — Change the model in the ⚙ API Keys dropdown.</li>
-      <li><strong>"Claude is disabled" / "Gemini is disabled"</strong> — Click the Claude or Gemini pill above the input to re-enable it.</li>
+      <li><strong>"Incorrect API key"</strong> — ChatGPT key is wrong. Get a new one at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>.</li>
+      <li><strong>"model not found"</strong> — Change the model in the API Keys dropdown.</li>
+      <li><strong>Only one or two responses showing</strong> — One or more AIs are toggled off. Click their pill above the input to re-enable.</li>
       <li><strong>Page won't open</strong> — Check the taskbar for the server window. If missing, relaunch <code>Launch Multi-AI.bat</code>, then go to <code>localhost:8731/multi-ai.html</code> manually.</li>
     </ul>
 
@@ -443,11 +578,13 @@
   // ── State ──────────────────────────────────────────────────────────────────
   let claudeHistory = [];
   let geminiHistory = [];
+  let chatgptHistory = [];
   let currentSession = null;
   let savedSessions = [];
   let activeSessionId = null;
   let claudeEnabled = true;
   let geminiEnabled = true;
+  let chatgptEnabled = true;
   let singleTurnMode = false;
   let lightMode = false;
   let layoutStacked = false;
@@ -507,9 +644,12 @@
     if (which === 'claude') {
       claudeEnabled = !claudeEnabled;
       document.getElementById('toggleClaude').classList.toggle('active', claudeEnabled);
-    } else {
+    } else if (which === 'gemini') {
       geminiEnabled = !geminiEnabled;
       document.getElementById('toggleGemini').classList.toggle('active', geminiEnabled);
+    } else {
+      chatgptEnabled = !chatgptEnabled;
+      document.getElementById('toggleChatgpt').classList.toggle('active', chatgptEnabled);
     }
   }
 
@@ -520,6 +660,7 @@
     el.innerHTML = `<div class="toggle-dot" style="background:${singleTurnMode ? '#f0c070' : ''}"></div> ${singleTurnMode ? 'Single-turn ON' : 'Single-turn mode'}`;
     claudeHistory = [];
     geminiHistory = [];
+    chatgptHistory = [];
   }
 
   // ── Settings ───────────────────────────────────────────────────────────────
@@ -528,20 +669,26 @@
   function saveKeys() {
     localStorage.setItem('claudeKey', document.getElementById('claudeKey').value);
     localStorage.setItem('geminiKey', document.getElementById('geminiKey').value);
+    localStorage.setItem('chatgptKey', document.getElementById('chatgptKey').value);
     localStorage.setItem('claudeModel', document.getElementById('claudeModel').value);
     localStorage.setItem('geminiModel', document.getElementById('geminiModel').value);
+    localStorage.setItem('chatgptModel', document.getElementById('chatgptModel').value);
   }
 
   function loadKeys() {
     const ck = localStorage.getItem('claudeKey') || '';
     const gk = localStorage.getItem('geminiKey') || '';
+    const ok = localStorage.getItem('chatgptKey') || '';
     const cm = localStorage.getItem('claudeModel') || 'claude-sonnet-4-6';
     const gm = localStorage.getItem('geminiModel') || 'gemini-2.5-flash';
+    const om = localStorage.getItem('chatgptModel') || 'gpt-4o';
     document.getElementById('claudeKey').value = ck;
     document.getElementById('geminiKey').value = gk;
+    document.getElementById('chatgptKey').value = ok;
     document.getElementById('claudeModel').value = cm;
     document.getElementById('geminiModel').value = gm;
-    if (!ck && !gk) document.getElementById('settingsPanel').classList.add('open');
+    document.getElementById('chatgptModel').value = om;
+    if (!ck && !gk && !ok) document.getElementById('settingsPanel').classList.add('open');
   }
 
   // ── Image handling ─────────────────────────────────────────────────────────
@@ -666,6 +813,7 @@
     activeSessionId = id;
     claudeHistory = [];
     geminiHistory = [];
+    chatgptHistory = [];
     session.turns.forEach(turn => {
       const userContent = turn.imageBase64
         ? [{ type: 'image', source: { type: 'base64', media_type: turn.imageMime || 'image/jpeg', data: turn.imageBase64 } }, { type: 'text', text: turn.prompt }]
@@ -677,6 +825,11 @@
         : [{ text: turn.prompt }];
       geminiHistory.push({ role: 'user', parts: geminiParts });
       if (turn.geminiText) geminiHistory.push({ role: 'model', parts: [{ text: turn.geminiText }] });
+      const chatgptUserContent = turn.imageBase64
+        ? [{ type: 'image_url', image_url: { url: `data:${turn.imageMime || 'image/jpeg'};base64,${turn.imageBase64}` } }, { type: 'text', text: turn.prompt }]
+        : turn.prompt;
+      chatgptHistory.push({ role: 'user', content: chatgptUserContent });
+      if (turn.chatgptText) chatgptHistory.push({ role: 'assistant', content: turn.chatgptText });
     });
     renderConversation(session);
     renderSidebar();
@@ -702,16 +855,23 @@
     // Determine which cards to show
     const hideClaude = !turn.claudeText && turn.claudeError === 'Claude is disabled.';
     const hideGemini = !turn.geminiText && turn.geminiError === 'Gemini is disabled.';
-    const singleBotMode = hideClaude || hideGemini;
+    const hideChatgpt = !turn.chatgptText && turn.chatgptError === 'ChatGPT is disabled.';
+    const visibleCount = [!hideClaude, !hideGemini, !hideChatgpt].filter(Boolean).length;
 
     const el = document.createElement('div');
     el.className = 'turn';
     const turnId = 'turn-' + Date.now() + '-' + Math.random().toString(36).slice(2);
     const claudeId = turnId + '-claude';
     const geminiId = turnId + '-gemini';
+    const chatgptId = turnId + '-chatgpt';
 
     const imgHtml = turn.imageDataUrl ? `<img src="${turn.imageDataUrl}" alt="attached image" />` : '';
-    const responsesClass = ['turn-responses', singleBotMode ? 'single-bot' : '', layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
+    const gridClass = visibleCount === 1 ? 'single-bot' : visibleCount === 2 ? 'two-bots' : '';
+    const responsesClass = ['turn-responses', gridClass, layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
+    const visibleIds = [!hideClaude ? claudeId : null, !hideGemini ? geminiId : null, !hideChatgpt ? chatgptId : null].filter(Boolean);
+    const copyAllHtml = visibleIds.length > 1
+      ? `<div class="copy-both-row"><button class="copy-both-btn" onclick="copyAll([${visibleIds.map(id => `'${id}'`).join(',')}], ['Claude','Gemini','ChatGPT'].filter((_,i) => [${[!hideClaude,!hideGemini,!hideChatgpt].map(Number).join(',')}][i]), this)">${visibleIds.length === 3 ? 'Copy all' : 'Copy both'}</button></div>`
+      : '';
 
     el.innerHTML = `
       <div class="turn-prompt">${escHtml(turn.prompt)}${imgHtml}</div>
@@ -734,8 +894,17 @@
           </div>
           <div class="turn-card-body" id="${geminiId}">${turn.geminiHtml || (turn.geminiText ? marked.parse(turn.geminiText) : '<span class="error-msg">' + escHtml(turn.geminiError || '') + '</span>')}</div>
         </div>
+        <div class="turn-card chatgpt${hideChatgpt ? ' bot-hidden' : ''}">
+          <div class="turn-card-header">
+            <div class="card-dot"></div>
+            <span class="turn-card-name">ChatGPT</span>
+            <span class="turn-card-tokens">${turn.chatgptTokens || ''}</span>
+            <button class="copy-btn" onclick="copyById('${chatgptId}', this)">Copy</button>
+          </div>
+          <div class="turn-card-body" id="${chatgptId}">${turn.chatgptHtml || (turn.chatgptText ? marked.parse(turn.chatgptText) : '<span class="error-msg">' + escHtml(turn.chatgptError || '') + '</span>')}</div>
+        </div>
       </div>
-      ${!singleBotMode ? `<div class="copy-both-row"><button class="copy-both-btn" onclick="copyBoth('${claudeId}', '${geminiId}', this)">Copy both</button></div>` : ''}
+      ${copyAllHtml}
     `;
     conv.appendChild(el);
     conv.scrollTop = conv.scrollHeight;
@@ -751,7 +920,9 @@
     el.className = 'turn';
     el.id = 'thinking-turn';
     const imgHtml = imgDataUrl ? `<img src="${imgDataUrl}" alt="attached image" />` : '';
-    const responsesClass = ['turn-responses', (!claudeEnabled || !geminiEnabled) ? 'single-bot' : '', layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
+    const thinkingVisible = [claudeEnabled, geminiEnabled, chatgptEnabled].filter(Boolean).length;
+    const thinkingGrid = thinkingVisible === 1 ? 'single-bot' : thinkingVisible === 2 ? 'two-bots' : '';
+    const responsesClass = ['turn-responses', thinkingGrid, layoutStacked ? 'stacked' : ''].filter(Boolean).join(' ');
     el.innerHTML = `
       <div class="turn-prompt">${escHtml(prompt)}${imgHtml}</div>
       <div class="${responsesClass}">
@@ -762,6 +933,10 @@
         <div class="turn-card gemini${!geminiEnabled ? ' bot-hidden' : ''}">
           <div class="turn-card-header"><div class="card-dot"></div><span class="turn-card-name">Gemini</span></div>
           <div class="turn-card-body thinking" id="geminiThinking"><span></span><span></span><span></span></div>
+        </div>
+        <div class="turn-card chatgpt${!chatgptEnabled ? ' bot-hidden' : ''}">
+          <div class="turn-card-header"><div class="card-dot"></div><span class="turn-card-name">ChatGPT</span></div>
+          <div class="turn-card-body thinking" id="chatgptThinking"><span></span><span></span><span></span></div>
         </div>
       </div>
     `;
@@ -775,6 +950,7 @@
     saveCurrentSession();
     claudeHistory = [];
     geminiHistory = [];
+    chatgptHistory = [];
     currentSession = { id: Date.now(), title: 'New chat', turns: [] };
     activeSessionId = null;
     document.getElementById('conversation').innerHTML = '<div class="conversation-empty" id="emptyState">Ask anything to get started</div>';
@@ -841,20 +1017,48 @@
     return { text, tokens: u ? `${u.promptTokenCount}↑ ${u.candidatesTokenCount}↓` : '' };
   }
 
+  async function callChatGPT(prompt, apiKey, model, image) {
+    const userContent = image
+      ? [{ type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.base64}` } }, { type: 'text', text: prompt }]
+      : prompt;
+
+    const messages = singleTurnMode
+      ? [{ role: 'user', content: userContent }]
+      : [...chatgptHistory, { role: 'user', content: userContent }];
+    if (!singleTurnMode) chatgptHistory.push({ role: 'user', content: userContent });
+
+    const res = await fetch('/proxy/chatgpt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify({ model, max_tokens: 2048, messages })
+    });
+    if (!res.ok) {
+      if (!singleTurnMode) chatgptHistory.pop();
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '';
+    if (!singleTurnMode) chatgptHistory.push({ role: 'assistant', content: text });
+    return { text, tokens: data.usage ? `${data.usage.prompt_tokens}↑ ${data.usage.completion_tokens}↓` : '' };
+  }
+
   // ── Send ───────────────────────────────────────────────────────────────────
   async function sendPrompt() {
     const prompt = document.getElementById('promptInput').value.trim();
     if (!prompt && !pendingImage) return;
     const claudeKey = document.getElementById('claudeKey').value.trim();
     const geminiKey = document.getElementById('geminiKey').value.trim();
+    const chatgptKey = document.getElementById('chatgptKey').value.trim();
     const claudeModel = document.getElementById('claudeModel').value;
     const geminiModel = document.getElementById('geminiModel').value;
+    const chatgptModel = document.getElementById('chatgptModel').value;
 
-    if (!claudeEnabled && !geminiEnabled) {
-      alert('Both Claude and Gemini are disabled. Enable at least one using the toggles above the input.');
+    if (!claudeEnabled && !geminiEnabled && !chatgptEnabled) {
+      alert('All AIs are disabled. Enable at least one using the toggles above the input.');
       return;
     }
-    if ((!claudeKey && claudeEnabled) && (!geminiKey && geminiEnabled)) {
+    if ((!claudeKey && claudeEnabled) && (!geminiKey && geminiEnabled) && (!chatgptKey && chatgptEnabled)) {
       document.getElementById('settingsPanel').classList.add('open');
       alert('Please enter at least one API key.');
       return;
@@ -881,8 +1085,10 @@
       imageDataUrl: image?.dataUrl || '',
       imageBase64: image?.base64 || '',
       imageMime: image?.mimeType || '',
-      claudeText: '', geminiText: '', claudeHtml: '', geminiHtml: '',
-      claudeTokens: '', geminiTokens: '', claudeError: '', geminiError: ''
+      claudeText: '', geminiText: '', chatgptText: '',
+      claudeHtml: '', geminiHtml: '', chatgptHtml: '',
+      claudeTokens: '', geminiTokens: '', chatgptTokens: '',
+      claudeError: '', geminiError: '', chatgptError: ''
     };
 
     const tasks = [];
@@ -925,6 +1131,25 @@
       if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">${escHtml(reason)}</span>`; }
     }
 
+    if (chatgptEnabled && chatgptKey) {
+      tasks.push(callChatGPT(displayPrompt, chatgptKey, chatgptModel, image)
+        .then(({ text, tokens }) => {
+          turn.chatgptText = text; turn.chatgptHtml = marked.parse(text); turn.chatgptTokens = tokens;
+          const el = document.getElementById('chatgptThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = marked.parse(text); }
+        })
+        .catch(err => {
+          turn.chatgptError = err.message;
+          const el = document.getElementById('chatgptThinking');
+          if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`; }
+        }));
+    } else {
+      const reason = !chatgptEnabled ? 'ChatGPT is disabled.' : 'No ChatGPT API key entered.';
+      turn.chatgptError = reason;
+      const el = document.getElementById('chatgptThinking');
+      if (el) { el.className = 'turn-card-body'; el.innerHTML = `<span class="error-msg">${escHtml(reason)}</span>`; }
+    }
+
     await Promise.allSettled(tasks);
 
     thinkingEl.remove();
@@ -953,11 +1178,11 @@
     setTimeout(() => { btn.textContent = orig; }, 1800);
   }
 
-  async function copyBoth(claudeId, geminiId, btn) {
-    const cEl = document.getElementById(claudeId);
-    const gEl = document.getElementById(geminiId);
-    const html = `<h2>Claude</h2>${cEl.innerHTML}<hr><h2>Gemini</h2>${gEl.innerHTML}`;
-    const text = `## Claude\n\n${cEl.innerText}\n\n---\n\n## Gemini\n\n${gEl.innerText}`;
+  async function copyAll(ids, labels, btn) {
+    const els = ids.map(id => document.getElementById(id));
+    const html = els.map((el, i) => `<h2>${labels[i]}</h2>${el.innerHTML}`).join('<hr>');
+    const text = els.map((el, i) => `## ${labels[i]}\n\n${el.innerText}`).join('\n\n---\n\n');
+    const origText = btn.textContent;
     try {
       await navigator.clipboard.write([new ClipboardItem({
         'text/html': new Blob([html], { type: 'text/html' }),
@@ -965,7 +1190,7 @@
       })]);
     } catch(e) { await navigator.clipboard.writeText(text); }
     btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy both'; }, 1800);
+    setTimeout(() => { btn.textContent = origText; }, 1800);
   }
 
   function escHtml(s) {
@@ -991,6 +1216,7 @@
     if (activeSessionId === id) {
       claudeHistory = [];
       geminiHistory = [];
+      chatgptHistory = [];
       currentSession = { id: Date.now(), title: 'New chat', turns: [] };
       activeSessionId = null;
       document.getElementById('conversation').innerHTML = '<div class="conversation-empty" id="emptyState">Ask anything to get started</div>';
@@ -998,11 +1224,175 @@
     renderSidebar();
   }
 
+  // ── Image Generation ───────────────────────────────────────────────────────
+  let dalleEnabled = true;
+  let nbEnabled = true;
+
+  function toggleImageBot(which) {
+    if (which === 'dalle') {
+      dalleEnabled = !dalleEnabled;
+      document.getElementById('toggleDalle').classList.toggle('active', dalleEnabled);
+    } else {
+      nbEnabled = !nbEnabled;
+      document.getElementById('toggleNB').classList.toggle('active', nbEnabled);
+    }
+  }
+
+  function saveImageGenSettings() {
+    localStorage.setItem('dalleImgModel', document.getElementById('dalleImgModel').value);
+    localStorage.setItem('nbImgModel', document.getElementById('nbImgModel').value);
+    localStorage.setItem('imgSize', document.getElementById('imgSize').value);
+  }
+
+  function loadImageGenSettings() {
+    const dm = localStorage.getItem('dalleImgModel') || 'gpt-image-1.5';
+    const nm = localStorage.getItem('nbImgModel') || 'gemini-3.1-flash-image-preview';
+    const sz = localStorage.getItem('imgSize') || '1024x1024';
+    document.getElementById('dalleImgModel').value = dm;
+    document.getElementById('nbImgModel').value = nm;
+    document.getElementById('imgSize').value = sz;
+  }
+
+  function handleImageGenKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateImages(); }
+  }
+
+  async function callDalle(prompt, apiKey, model, size) {
+    const res = await fetch('/proxy/dalle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify({ model, prompt, n: 1, size })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const b64 = data.data?.[0]?.b64_json;
+    if (!b64) throw new Error('No image returned');
+    return `data:image/png;base64,${b64}`;
+  }
+
+  async function callNanoBanana(prompt, apiKey, model) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ['IMAGE'] }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imgPart = parts.find(p => p.inlineData);
+    if (!imgPart) throw new Error('No image returned');
+    return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+  }
+
+  async function generateImages() {
+    const prompt = document.getElementById('imagegenPrompt').value.trim();
+    if (!prompt) return;
+    const claudeKey = document.getElementById('claudeKey').value.trim();
+    const geminiKey = document.getElementById('geminiKey').value.trim();
+    const chatgptKey = document.getElementById('chatgptKey').value.trim();
+    const dalleModel = document.getElementById('dalleImgModel').value;
+    const nbModel = document.getElementById('nbImgModel').value;
+    const size = document.getElementById('imgSize').value;
+
+    if (!dalleEnabled && !nbEnabled) {
+      alert('Both image generators are disabled. Enable at least one.');
+      return;
+    }
+    if (dalleEnabled && !chatgptKey) {
+      alert('DALL-E requires your OpenAI API key. Add it in API Keys settings.');
+      return;
+    }
+    if (nbEnabled && !geminiKey) {
+      alert('Nano Banana requires your Google API key. Add it in API Keys settings.');
+      return;
+    }
+
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    document.getElementById('imagegenPrompt').value = '';
+    document.getElementById('imagegenPrompt').style.height = '';
+
+    const empty = document.getElementById('imagegenEmpty');
+    if (empty) empty.remove();
+
+    // Add a pending item
+    const results = document.getElementById('imagegenResults');
+    const item = document.createElement('div');
+    item.className = 'imagegen-item';
+    const visCount = [dalleEnabled, nbEnabled].filter(Boolean).length;
+    item.innerHTML = `
+      <div class="imagegen-prompt-label">${escHtml(prompt)}</div>
+      <div class="imagegen-images${visCount === 1 ? ' single-img' : ''}" id="igrid-${Date.now()}">
+        ${dalleEnabled ? `
+        <div class="imagegen-card">
+          <div class="imagegen-card-header"><div class="card-dot" style="background:#10a37f"></div><span class="turn-card-name" style="color:#10a37f">GPT Image</span><span class="turn-card-tokens" style="font-size:0.7rem;color:var(--text-muted)">${dalleModel}</span></div>
+          <div class="imagegen-card-body" id="dalle-result-${Date.now()}"><div class="img-thinking">Generating…</div></div>
+        </div>` : ''}
+        ${nbEnabled ? `
+        <div class="imagegen-card">
+          <div class="imagegen-card-header"><div class="card-dot" style="background:#4285f4"></div><span class="turn-card-name" style="color:#4285f4">Nano Banana</span><span style="font-size:0.7rem;color:var(--text-muted)">${nbModel.includes('3.1') ? 'NB 2' : nbModel.includes('pro') ? 'NB Pro' : 'NB'}</span></div>
+          <div class="imagegen-card-body" id="nb-result-${Date.now()}"><div class="img-thinking">Generating…</div></div>
+        </div>` : ''}
+      </div>
+    `;
+    results.appendChild(item);
+    results.scrollTop = results.scrollHeight;
+
+    // Get the result div IDs from the freshly created elements
+    const dalleDiv = item.querySelector('[id^="dalle-result-"]');
+    const nbDiv = item.querySelector('[id^="nb-result-"]');
+
+    const tasks = [];
+
+    if (dalleEnabled && chatgptKey) {
+      tasks.push(callDalle(prompt, chatgptKey, dalleModel, size)
+        .then(dataUrl => {
+          if (dalleDiv) dalleDiv.innerHTML = `<img src="${dataUrl}" alt="DALL-E generated image" /><button class="download-btn" onclick="downloadImage('${dataUrl}', 'dalle-image.png')">Download</button>`;
+        })
+        .catch(err => {
+          if (dalleDiv) dalleDiv.innerHTML = `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`;
+        }));
+    }
+
+    if (nbEnabled && geminiKey) {
+      tasks.push(callNanoBanana(prompt, geminiKey, nbModel)
+        .then(dataUrl => {
+          if (nbDiv) nbDiv.innerHTML = `<img src="${dataUrl}" alt="Nano Banana generated image" /><button class="download-btn" onclick="downloadImage('${dataUrl}', 'nano-banana-image.png')">Download</button>`;
+        })
+        .catch(err => {
+          if (nbDiv) nbDiv.innerHTML = `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`;
+        }));
+    }
+
+    await Promise.allSettled(tasks);
+    btn.disabled = false;
+    document.getElementById('imagegenPrompt').focus();
+    results.scrollTop = results.scrollHeight;
+  }
+
+  function downloadImage(dataUrl, filename) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    a.click();
+  }
+
   // ── Init ───────────────────────────────────────────────────────────────────
   loadTheme();
   loadLayout();
   loadKeys();
   loadSessions();
+  loadImageGenSettings();
   currentSession = { id: Date.now(), title: 'New chat', turns: [] };
 </script>
 </body>

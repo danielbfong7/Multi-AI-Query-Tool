@@ -14,21 +14,31 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path == '/proxy/claude':
+        if self.path in ('/proxy/claude', '/proxy/chatgpt', '/proxy/dalle'):
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
             api_key = self.headers.get('x-api-key', '')
+            if self.path == '/proxy/claude':
+                url = 'https://api.anthropic.com/v1/messages'
+                headers = {
+                    'Content-Type': 'application/json',
+                    'x-api-key': api_key,
+                    'anthropic-version': '2023-06-01',
+                }
+            elif self.path == '/proxy/dalle':
+                url = 'https://api.openai.com/v1/images/generations'
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {api_key}',
+                }
+            else:
+                url = 'https://api.openai.com/v1/chat/completions'
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {api_key}',
+                }
             try:
-                req = urllib.request.Request(
-                    'https://api.anthropic.com/v1/messages',
-                    data=body,
-                    headers={
-                        'Content-Type': 'application/json',
-                        'x-api-key': api_key,
-                        'anthropic-version': '2023-06-01',
-                    },
-                    method='POST'
-                )
+                req = urllib.request.Request(url, data=body, headers=headers, method='POST')
                 with urllib.request.urlopen(req) as resp:
                     result = resp.read()
                 self.send_response(200)
@@ -56,7 +66,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def _cors(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-model')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-model, Authorization')
 
     def log_message(self, fmt, *args):
         pass
