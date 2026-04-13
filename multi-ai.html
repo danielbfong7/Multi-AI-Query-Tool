@@ -314,13 +314,13 @@
       <div style="margin-top:7px">
         <select id="geminiModel" onchange="saveKeys()">
           <optgroup label="Gemini 3 series">
-            <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (most capable)</option>
+            <option value="gemini-3.1-pro-preview" selected>Gemini 3.1 Pro (most capable)</option>
             <option value="gemini-3-flash">Gemini 3 Flash</option>
             <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite (fastest, cheapest)</option>
           </optgroup>
           <optgroup label="Gemini 2.5 series">
             <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro</option>
-            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (recommended)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (recommended)</option>
             <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
           </optgroup>
           <optgroup label="Older models">
@@ -408,7 +408,7 @@
           <div class="toggle-pill gemini-pill active" id="toggleGemini" onclick="toggleBot('gemini')" title="Enable or disable Gemini">
             <div class="toggle-dot"></div> Gemini
           </div>
-          <div class="toggle-pill chatgpt-pill active" id="toggleChatgpt" onclick="toggleBot('chatgpt')" title="Enable or disable ChatGPT">
+          <div class="toggle-pill chatgpt-pill" id="toggleChatgpt" onclick="toggleBot('chatgpt')" title="Enable or disable ChatGPT">
             <div class="toggle-dot"></div> ChatGPT
           </div>
           <div class="controls-sep"></div>
@@ -593,7 +593,7 @@
   let activeSessionId = null;
   let claudeEnabled = true;
   let geminiEnabled = true;
-  let chatgptEnabled = true;
+  let chatgptEnabled = false;
   let singleTurnMode = true;
   let lightMode = false;
   let layoutStacked = false;
