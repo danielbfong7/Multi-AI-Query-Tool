@@ -304,7 +304,7 @@
   </svg>
   <div>
     <h1>Multi-AI Query</h1>
-    <div class="subtitle">Claude &amp; Gemini side by side</div>
+    <div class="subtitle">Claude, Gemini &amp; ChatGPT side by side</div>
   </div>
   <div class="header-actions">
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀ Light</button>
@@ -607,18 +607,30 @@
 <script>
   marked.setOptions({ breaks: true, gfm: true });
 
-  function renderMath(el) {
-    if (typeof renderMathInElement === 'function') {
-      renderMathInElement(el, {
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$', right: '$', display: false },
-          { left: '\\(', right: '\\)', display: false },
-          { left: '\\[', right: '\\]', display: true },
-        ],
-        throwOnError: false
-      });
-    }
+  function parseWithMath(text) {
+    if (typeof katex === 'undefined') return marked.parse(text);
+    const saved = [];
+    // Shield display math $$...$$ first
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, inner) => {
+      const key = `\x00MATHD${saved.length}\x00`;
+      try { saved.push(katex.renderToString(inner.trim(), { displayMode: true, throwOnError: false })); }
+      catch { saved.push(`$$${inner}$$`); }
+      return key;
+    });
+    // Shield inline math $...$
+    text = text.replace(/\$([^\n$`]+?)\$/g, (_, inner) => {
+      const key = `\x00MATHI${saved.length}\x00`;
+      try { saved.push(katex.renderToString(inner.trim(), { displayMode: false, throwOnError: false })); }
+      catch { saved.push(`$${inner}$`); }
+      return key;
+    });
+    // Render markdown (safe — math already extracted)
+    let html = marked.parse(text);
+    // Re-inject rendered math
+    saved.forEach((rendered, i) => {
+      html = html.replace(`\x00MATHD${i}\x00`, rendered).replace(`\x00MATHI${i}\x00`, rendered);
+    });
+    return html;
   }
 
   function setCardHtml(id, html) {
@@ -626,7 +638,6 @@
     if (!el) return;
     el.className = 'turn-card-body';
     el.innerHTML = html;
-    renderMath(el);
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -951,7 +962,7 @@
             <span class="turn-card-tokens">${turn.claudeTokens || ''}</span>
             <button class="copy-btn" onclick="copyById('${claudeId}', this)">Copy</button>
           </div>
-          <div class="turn-card-body" id="${claudeId}">${turn.claudeHtml || (turn.claudeText ? marked.parse(turn.claudeText) : '<span class="error-msg">' + escHtml(turn.claudeError || '') + '</span>')}</div>
+          <div class="turn-card-body" id="${claudeId}">${turn.claudeHtml || (turn.claudeText ? parseWithMath(turn.claudeText) : '<span class="error-msg">' + escHtml(turn.claudeError || '') + '</span>')}</div>
         </div>
         <div class="turn-card gemini${hideGemini ? ' bot-hidden' : ''}">
           <div class="turn-card-header">
@@ -960,7 +971,7 @@
             <span class="turn-card-tokens">${turn.geminiTokens || ''}</span>
             <button class="copy-btn" onclick="copyById('${geminiId}', this)">Copy</button>
           </div>
-          <div class="turn-card-body" id="${geminiId}">${turn.geminiHtml || (turn.geminiText ? marked.parse(turn.geminiText) : '<span class="error-msg">' + escHtml(turn.geminiError || '') + '</span>')}</div>
+          <div class="turn-card-body" id="${geminiId}">${turn.geminiHtml || (turn.geminiText ? parseWithMath(turn.geminiText) : '<span class="error-msg">' + escHtml(turn.geminiError || '') + '</span>')}</div>
         </div>
         <div class="turn-card chatgpt${hideChatgpt ? ' bot-hidden' : ''}">
           <div class="turn-card-header">
@@ -969,7 +980,7 @@
             <span class="turn-card-tokens">${turn.chatgptTokens || ''}</span>
             <button class="copy-btn" onclick="copyById('${chatgptId}', this)">Copy</button>
           </div>
-          <div class="turn-card-body" id="${chatgptId}">${turn.chatgptHtml || (turn.chatgptText ? marked.parse(turn.chatgptText) : '<span class="error-msg">' + escHtml(turn.chatgptError || '') + '</span>')}</div>
+          <div class="turn-card-body" id="${chatgptId}">${turn.chatgptHtml || (turn.chatgptText ? parseWithMath(turn.chatgptText) : '<span class="error-msg">' + escHtml(turn.chatgptError || '') + '</span>')}</div>
         </div>
       </div>
       ${copyAllHtml}
@@ -1165,8 +1176,8 @@
     if (claudeEnabled && claudeKey) {
       tasks.push(callClaude(displayPrompt, claudeKey, claudeModel, image)
         .then(({ text, tokens }) => {
-          turn.claudeText = text; turn.claudeHtml = marked.parse(text); turn.claudeTokens = tokens;
-          setCardHtml('claudeThinking', marked.parse(text));
+          turn.claudeText = text; turn.claudeHtml = parseWithMath(text); turn.claudeTokens = tokens;
+          setCardHtml('claudeThinking', parseWithMath(text));
         })
         .catch(err => {
           turn.claudeError = err.message;
@@ -1181,8 +1192,8 @@
     if (geminiEnabled && geminiKey) {
       tasks.push(callGemini(displayPrompt, geminiKey, geminiModel, image)
         .then(({ text, tokens }) => {
-          turn.geminiText = text; turn.geminiHtml = marked.parse(text); turn.geminiTokens = tokens;
-          setCardHtml('geminiThinking', marked.parse(text));
+          turn.geminiText = text; turn.geminiHtml = parseWithMath(text); turn.geminiTokens = tokens;
+          setCardHtml('geminiThinking', parseWithMath(text));
         })
         .catch(err => {
           turn.geminiError = err.message;
@@ -1197,8 +1208,8 @@
     if (chatgptEnabled && chatgptKey) {
       tasks.push(callChatGPT(displayPrompt, chatgptKey, chatgptModel, image)
         .then(({ text, tokens }) => {
-          turn.chatgptText = text; turn.chatgptHtml = marked.parse(text); turn.chatgptTokens = tokens;
-          setCardHtml('chatgptThinking', marked.parse(text));
+          turn.chatgptText = text; turn.chatgptHtml = parseWithMath(text); turn.chatgptTokens = tokens;
+          setCardHtml('chatgptThinking', parseWithMath(text));
         })
         .catch(err => {
           turn.chatgptError = err.message;
