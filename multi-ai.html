@@ -610,20 +610,24 @@
   function parseWithMath(text) {
     if (typeof katex === 'undefined') return marked.parse(text);
     const saved = [];
-    // Shield display math $$...$$ first
-    text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, inner) => {
+    const shieldDisplay = (inner, fallback) => {
       const key = `\x00MATHD${saved.length}\x00`;
       try { saved.push(katex.renderToString(inner.trim(), { displayMode: true, throwOnError: false })); }
-      catch { saved.push(`$$${inner}$$`); }
+      catch { saved.push(fallback); }
       return key;
-    });
-    // Shield inline math $...$
-    text = text.replace(/\$([^\n$`]+?)\$/g, (_, inner) => {
+    };
+    const shieldInline = (inner, fallback) => {
       const key = `\x00MATHI${saved.length}\x00`;
       try { saved.push(katex.renderToString(inner.trim(), { displayMode: false, throwOnError: false })); }
-      catch { saved.push(`$${inner}$`); }
+      catch { saved.push(fallback); }
       return key;
-    });
+    };
+    // Shield display math: $$...$$ and \[...\]
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, (m, inner) => shieldDisplay(inner, m));
+    text = text.replace(/\\\[([\s\S]+?)\\\]/g, (m, inner) => shieldDisplay(inner, m));
+    // Shield inline math: $...$ and \(...\)
+    text = text.replace(/\$([^\n$`]+?)\$/g, (m, inner) => shieldInline(inner, m));
+    text = text.replace(/\\\(([^)]+?)\\\)/g, (m, inner) => shieldInline(inner, m));
     // Render markdown (safe — math already extracted)
     let html = marked.parse(text);
     // Re-inject rendered math
