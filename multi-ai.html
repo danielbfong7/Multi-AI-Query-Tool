@@ -1178,12 +1178,15 @@
     const tasks = [];
 
     if (claudeEnabled && claudeKey) {
+      const t0claude = Date.now();
       tasks.push(callClaude(displayPrompt, claudeKey, claudeModel, image)
         .then(({ text, tokens }) => {
+          beepIfSlow(t0claude);
           turn.claudeText = text; turn.claudeHtml = parseWithMath(text); turn.claudeTokens = tokens;
           setCardHtml('claudeThinking', parseWithMath(text));
         })
         .catch(err => {
+          beepIfSlow(t0claude);
           turn.claudeError = err.message;
           setCardHtml('claudeThinking', `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`);
         }));
@@ -1194,12 +1197,15 @@
     }
 
     if (geminiEnabled && geminiKey) {
+      const t0gemini = Date.now();
       tasks.push(callGemini(displayPrompt, geminiKey, geminiModel, image)
         .then(({ text, tokens }) => {
+          beepIfSlow(t0gemini);
           turn.geminiText = text; turn.geminiHtml = parseWithMath(text); turn.geminiTokens = tokens;
           setCardHtml('geminiThinking', parseWithMath(text));
         })
         .catch(err => {
+          beepIfSlow(t0gemini);
           turn.geminiError = err.message;
           setCardHtml('geminiThinking', `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`);
         }));
@@ -1210,12 +1216,15 @@
     }
 
     if (chatgptEnabled && chatgptKey) {
+      const t0chatgpt = Date.now();
       tasks.push(callChatGPT(displayPrompt, chatgptKey, chatgptModel, image)
         .then(({ text, tokens }) => {
+          beepIfSlow(t0chatgpt);
           turn.chatgptText = text; turn.chatgptHtml = parseWithMath(text); turn.chatgptTokens = tokens;
           setCardHtml('chatgptThinking', parseWithMath(text));
         })
         .catch(err => {
+          beepIfSlow(t0chatgpt);
           turn.chatgptError = err.message;
           setCardHtml('chatgptThinking', `<span class="error-msg">⚠ ${escHtml(err.message)}</span>`);
         }));
@@ -1236,6 +1245,20 @@
 
     document.getElementById('sendBtn').disabled = false;
     document.getElementById('promptInput').focus();
+  }
+
+  function beepIfSlow(startTime) {
+    if (Date.now() - startTime < 30000) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
